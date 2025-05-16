@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {% load static %}
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="{% static 'home/sign_up.css' %}">
+</head>
+<body>
+  <div class="signup-container">
+    <form class="signup-form" method="POST" enctype="multipart/form-data" action="{%}">
+      {% csrf_token %}
+      <h2>Create an Account</h2>
+
+      <div class="input-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required />
+      </div>
+
+      <div class="input-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required />
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+      </div>
+
+      <div class="input-group">
+        <label for="bio">Bio</label>
+        <textarea id="bio" name="bio" rows="3" placeholder="Tell us something about yourself..."></textarea>
+      </div>
+
+      <div class="input-group">
+        <label for="profile_picture">Profile Picture</label>
+        <input type="file" id="profile_picture" name="profile_picture" accept="image/*" />
+        <img id="image_preview" src="#" alt="Image Preview" />
+      </div>
+
+      <button type="submit" class="btn-primary">Sign Up</button>
+
+      <p class="helper-text">Already have an account? <a href="{}">Sign in</a></p>
+    </form>
+  </div>
+
+  <script>
+  const input = document.getElementById('profile_picture');
+  const preview = document.getElementById('image_preview');
+
+  input.addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      preview.style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>
