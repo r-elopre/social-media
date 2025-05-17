@@ -12,6 +12,8 @@
   <h1>Welcome, @{{ user.username }} </h1>
   <input type="search" placeholder="Search users..." class="search-bar">
   <div id="search-results" class="search-results"></div>
+  <a href="{% url 'logout' %}" class="logout-btn">Log Out</a>
+
 </header>
 
 <main class="main-container">

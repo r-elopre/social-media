@@ -6,10 +6,16 @@ import os
 import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseRedirect
+from django.utils import timezone
 
 
 def homepage_view(request):
     return render(request, 'home/index.html')
+
+def logout_view(request):
+    request.session.flush()  # Clear all session data
+    return redirect("signin")  # Redirect to login page
 
 
 def signup_view(request):
@@ -106,6 +112,7 @@ def signin_view(request):
             )
 
             if response.data:
+                request.session["user_id"] = response.data["user_id"]  # ✅ Add this
                 return render(request, "home/profile.html", {"user": response.data})
 
             else:
@@ -139,8 +146,10 @@ def search_users_view(request):
     
 
 
+@csrf_exempt
 def searched_profile_view(request, username):
     try:
+        # Fetch receiver data
         response = (
             supabase
             .table("accounts")
@@ -149,13 +158,30 @@ def searched_profile_view(request, username):
             .single()
             .execute()
         )
-
         if not response.data:
-            return render(request, "home/searched_profile.html", {
-                "error": "User not found"
-            })
+            return render(request, "home/searched_profile.html", {"error": "User not found"})
 
-        return render(request, "home/searched_profile.html", {"user": response.data})
+        receiver_data = response.data
+
+        # If POST, insert new message
+        if request.method == "POST":
+            sender_id = request.session.get("user_id")
+            receiver_id = receiver_data["user_id"]
+            message = request.POST.get("message", "").strip()
+
+            if sender_id and message:
+                try:
+                    supabase.table("chats").insert({
+                        "sender_id": sender_id,
+                        "receiver_id": receiver_id,
+                        "message": message
+                    }).execute()
+                except Exception as insert_error:
+                    print("Message insert failed:", insert_error)
+
+        return render(request, "home/searched_profile.html", {
+            "user": receiver_data
+        })
 
     except Exception as e:
         return render(request, "home/searched_profile.html", {
