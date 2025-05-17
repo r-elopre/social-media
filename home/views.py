@@ -85,3 +85,32 @@ def signup_view(request):
         return redirect("home")
 
     return render(request, "home/sign_up.html")
+
+
+def signin_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        try:
+            response = (
+                supabase
+                .table("accounts")
+                .select("*")
+                .eq("username", username)
+                .eq("password", password)  # ⚠️ Plain text comparison (not safe for production)
+                .single()
+                .execute()
+            )
+
+            if response.data:
+                return render(request, "home/profile.html", {"user": response.data})
+
+            else:
+                return render(request, "home/index.html", {"error": "❌ Invalid credentials."})
+
+        except Exception as e:
+            print("Login error:", e)
+            return render(request, "home/index.html", {"error": "⚠️ Something went wrong. Try again."})
+
+    return render(request, "home/index.html")

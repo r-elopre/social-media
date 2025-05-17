@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% load static %}
+  <title>User Profile - Social Media</title>
+  <link rel="stylesheet" href="{% static 'home/profile.css' %}">
+</head>
+<body>
+  <header class="header">
+  <h1>Welcome, @{{ user.username }} </h1>
+  <input type="search" placeholder="Search users..." class="search-bar">
+</header>
+
+<main class="main-container">
+  <!-- Profile Section -->
+  <section class="profile-section">
+    <img src="{{ user.profile_url }}" alt="Profile Picture" class="profile-pic">
+    <div class="profile-info">
+      <h2>{{ user.full_name }}</h2>
+      <p>{{ user.bio }}</p>
+    </div>
+  </section>
+
+
+
+  <!-- Message Section -->
+<section class="message-section">
+  <h3>Recent Messages</h3>
+  <ul class="message-list">
+    <li>
+      <img src="https://via.placeholder.com/40" alt="Jane" class="message-avatar">
+      <div>
+        <strong>Jane</strong><br>
+        <span>Hey! Are you free to discuss the UI update?</span>
+      </div>
+    </li>
+    <li>
+      <img src="https://via.placeholder.com/40" alt="Mike" class="message-avatar">
+      <div>
+        <strong>Mike</strong><br>
+        <span>Just uploaded the new designs. Check it out!</span>
+      </div>
+    </li>
+    <li>
+      <img src="https://via.placeholder.com/40" alt="Sarah" class="message-avatar">
+      <div>
+        <strong>Sarah</strong><br>
+        <span>Can you help me with the Firebase config?</span>
+      </div>
+    </li>
+  </ul>
+</section>
+
+    <!-- Feedback Section -->
+<section class="community-section">
+  <h3>Your Community</h3>
+  <ul>
+    <li>
+      <img src="https://via.placeholder.com/40" alt="Alice" class="community-avatar">
+      <span><strong>Alice</strong> liked your recent post about UI design.</span>
+    </li>
+    <li>
+      <img src="https://via.placeholder.com/40" alt="Bob" class="community-avatar">
+      <span><strong>Bob</strong> mentioned you in a comment: "John really helped me understand Firebase!"</span>
+    </li>
+    <li>
+      <img src="https://via.placeholder.com/40" alt="Clara" class="community-avatar">
+      <span><strong>Clara</strong> started following you.</span>
+    </li>
+  </ul>
+</section>
+
+    <!-- Post Section -->
+    <section class="post-section">
+      <h3>Create a Post</h3>
+      <form>
+        <textarea placeholder="What's on your mind?" required></textarea>
+        <input type="file">
+        <button type="submit">Post</button>
+      </form>
+    </section>
+
+  </main>
+</body>
+</html>
