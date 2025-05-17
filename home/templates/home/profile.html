@@ -29,32 +29,27 @@
 
 
   <!-- Message Section -->
-<section class="message-section">
-  <h3>Recent Messages</h3>
-  <ul class="message-list">
-    <li>
-      <img src="https://via.placeholder.com/40" alt="Jane" class="message-avatar">
-      <div>
-        <strong>Jane</strong><br>
-        <span>Hey! Are you free to discuss the UI update?</span>
-      </div>
-    </li>
-    <li>
-      <img src="https://via.placeholder.com/40" alt="Mike" class="message-avatar">
-      <div>
-        <strong>Mike</strong><br>
-        <span>Just uploaded the new designs. Check it out!</span>
-      </div>
-    </li>
-    <li>
-      <img src="https://via.placeholder.com/40" alt="Sarah" class="message-avatar">
-      <div>
-        <strong>Sarah</strong><br>
-        <span>Can you help me with the Firebase config?</span>
-      </div>
-    </li>
-  </ul>
-</section>
+<ul class="message-list">
+  {% for msg in messages %}
+  <li>
+    <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" class="message-avatar">
+    <div>
+      <strong>{{ msg.sender_name }}</strong><br>
+      <span>
+        {% if msg.is_you %}
+          <strong style="color: #0984e3;">You:</strong>
+        {% endif %}
+        {{ msg.content }}
+      </span><br>
+
+      <small style="color: #636e72;">🕒 {{ msg.time }}</small>
+    </div>
+  </li>
+  {% empty %}
+  <li>No recent messages.</li>
+  {% endfor %}
+</ul>
+
 
     <!-- Feedback Section -->
 <section class="community-section">

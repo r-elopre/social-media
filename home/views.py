@@ -2,12 +2,14 @@ from django.shortcuts import render
 from django.shortcuts import render, redirect
 from django.conf import settings
 from home.supabase_client import supabase
-import os
-import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect
 from django.utils import timezone
+from pytz import timezone
+import datetime
+import os
+import uuid
 
 
 def homepage_view(request):
@@ -113,7 +115,66 @@ def signin_view(request):
 
             if response.data:
                 request.session["user_id"] = response.data["user_id"]  # ✅ Add this
-                return render(request, "home/profile.html", {"user": response.data})
+                try:
+                    user_id = response.data["user_id"]
+                    messages_response = (
+                        supabase
+                        .table("chats")
+                        .select("*")
+                        .or_(
+                            f"receiver_id.eq.{user_id},sender_id.eq.{user_id}"
+                        )
+                        .order("created_at", desc=True)
+                        .execute()
+                    )
+
+
+                    manila = timezone("Asia/Manila")
+                    messages = []
+                    seen_users = set()
+                    messages = []
+
+                    for msg in messages_response.data:
+                        is_sender = msg["sender_id"] == user_id
+                        other_user_id = msg["receiver_id"] if is_sender else msg["sender_id"]
+
+                        if other_user_id in seen_users:
+                            continue
+                        seen_users.add(other_user_id)
+
+                        # Fetch other user info
+                        other_user_info = (
+                            supabase
+                            .table("accounts")
+                            .select("full_name, profile_url")
+                            .eq("user_id", other_user_id)
+                            .single()
+                            .execute()
+                        )
+
+                        # Format time
+                        raw_time = datetime.datetime.fromisoformat(msg["created_at"].replace("Z", "+00:00"))
+                        local_time = raw_time.astimezone(timezone("Asia/Manila")).strftime("%b %d, %Y %I:%M %p")
+
+                        messages.append({
+                            "sender_id": other_user_id,
+                            "sender_name": other_user_info.data["full_name"],
+                            "sender_avatar": other_user_info.data["profile_url"],
+                            "content": msg["message"],
+                            "time": local_time,
+                            "is_you": is_sender, 
+                        })
+
+
+
+                except Exception as e:
+                    print("Error fetching messages:", e)
+                    messages = []
+
+                return render(request, "home/profile.html", {
+                    "user": response.data,
+                    "messages": messages
+                })
 
             else:
                 return render(request, "home/index.html", {"error": "❌ Invalid credentials."})
