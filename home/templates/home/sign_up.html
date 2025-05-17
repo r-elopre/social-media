@@ -9,9 +9,14 @@
 </head>
 <body>
   <div class="signup-container">
-    <form class="signup-form" method="POST" enctype="multipart/form-data" action="{%}">
+    <form class="signup-form" method="POST" enctype="multipart/form-data" action="{% url 'signup' %}">
+
       {% csrf_token %}
       <h2>Create an Account</h2>
+      {% if error %}
+        <p style="color: red;">{{ error }}</p>
+      {% endif %}
+
 
       <div class="input-group">
         <label for="name">Full Name</label>
@@ -41,7 +46,7 @@
 
       <button type="submit" class="btn-primary">Sign Up</button>
 
-      <p class="helper-text">Already have an account? <a href="{}">Sign in</a></p>
+      <p class="helper-text">Already have an account? <a href="{% url 'home' %}">Sign in</a></p>
     </form>
   </div>
 
