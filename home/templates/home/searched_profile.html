@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% load static %}
+  <title>Searched Profile - Social Media</title>
+  <link rel="stylesheet" href="{% static 'home/searched_profile.css' %}">
+</head>
+<body>
+
+<main class="main-container">
+  <!-- Profile Section -->
+  <section class="profile-section">
+   <img src="{{ user.profile_url }}" alt="Profile Picture" class="profile-pic">
+    <div class="profile-info">
+      <h2>{{ user.full_name }}</h2>
+      <p>{{ user.bio }}</p>
+    </div>
+  </section>
+
+  <!-- Send Message Section -->
+  <section class="message-section">
+    <h3>Send a Message</h3>
+    <form method="POST" action="#">
+      <textarea name="message" placeholder="Type your message here..." required></textarea>
+      <button type="submit">Send</button>
+    </form>
+  </section>
+
+  <!-- Community Section -->
+  <section class="community-section">
+    <h3>{{ user.full_name }}'s Community</h3>
+    <ul>
+      <li>
+        <img src="https://via.placeholder.com/40" alt="Alice" class="community-avatar">
+        <span><strong>Alice</strong> liked John's recent post about UI design.</span>
+      </li>
+      <li>
+        <img src="https://via.placeholder.com/40" alt="Bob" class="community-avatar">
+        <span><strong>Bob</strong> mentioned John in a comment: "John really helped me understand Firebase!"</span>
+      </li>
+      <li>
+        <img src="https://via.placeholder.com/40" alt="Clara" class="community-avatar">
+        <span><strong>Clara</strong> started following John.</span>
+      </li>
+    </ul>
+  </section>
+</main>
+
+<script src="{% static 'home/js/profile.js' %}"></script>
+</body>
+</html>

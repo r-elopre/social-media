@@ -11,6 +11,7 @@
   <header class="header">
   <h1>Welcome, @{{ user.username }} </h1>
   <input type="search" placeholder="Search users..." class="search-bar">
+  <div id="search-results" class="search-results"></div>
 </header>
 
 <main class="main-container">
@@ -83,5 +84,8 @@
     </section>
 
   </main>
+
+  <script src="{% static 'home/js/profile.js' %}"></script>
+
 </body>
 </html>

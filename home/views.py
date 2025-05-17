@@ -4,6 +4,8 @@ from django.conf import settings
 from home.supabase_client import supabase
 import os
 import uuid
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 def homepage_view(request):
@@ -114,3 +116,48 @@ def signin_view(request):
             return render(request, "home/index.html", {"error": "⚠️ Something went wrong. Try again."})
 
     return render(request, "home/index.html")
+
+
+
+@csrf_exempt
+def search_users_view(request):
+    query = request.GET.get("q", "").replace(" ", "").lower()
+
+    try:
+        response = supabase.table("accounts").select("full_name,username,profile_url").execute()
+        if not response.data:
+            return JsonResponse([], safe=False)
+
+        matched_users = [
+            user for user in response.data
+            if query in user['full_name'].replace(" ", "").lower()
+        ]
+        return JsonResponse(matched_users, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+
+
+def searched_profile_view(request, username):
+    try:
+        response = (
+            supabase
+            .table("accounts")
+            .select("*")
+            .eq("username", username)
+            .single()
+            .execute()
+        )
+
+        if not response.data:
+            return render(request, "home/searched_profile.html", {
+                "error": "User not found"
+            })
+
+        return render(request, "home/searched_profile.html", {"user": response.data})
+
+    except Exception as e:
+        return render(request, "home/searched_profile.html", {
+            "error": f"Error fetching user: {str(e)}"
+        })
