@@ -16,35 +16,36 @@
   </div>
   <ul class="drawer-menu">
     <li>
-      <a href="#">
-        <span class="drawer-icon">🏠</span>
-        <span class="drawer-label">Home</span>
-      </a>
-    </li>
-    <li>
-      <a href="#">
-        <span class="drawer-icon">📨</span>
-        <span class="drawer-label">Messages</span>
-      </a>
-    </li>
-    <li>
-      <a href="#">
-        <span class="drawer-icon">👥</span>
-        <span class="drawer-label">Community</span>
-      </a>
-    </li>
-    <li>
-      <a href="#">
-        <span class="drawer-icon">📝</span>
-        <span class="drawer-label">Create Post</span>
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'logout' %}" class="logout-btn">
-        <span class="drawer-icon">🚪</span>
-        <span class="drawer-label">Log Out</span>
-      </a>
-    </li>
+        <a href="#" class="nav-link" data-target="home-section">
+          <span class="drawer-icon">🏠</span>
+          <span class="drawer-label">Home</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link" data-target="messages-section">
+          <span class="drawer-icon">📨</span>
+          <span class="drawer-label">Messages</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link" data-target="community-section">
+          <span class="drawer-icon">👥</span>
+          <span class="drawer-label">Community</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link" data-target="post-section">
+          <span class="drawer-icon">📝</span>
+          <span class="drawer-label">Create Post</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'logout' %}" class="logout-btn">
+          <span class="drawer-icon">🚪</span>
+          <span class="drawer-label">Log Out</span>
+        </a>
+      </li>
+
   </ul>
 </nav>
 
@@ -52,7 +53,8 @@
   <!-- Main Content Area -->
   <div class="main-content">
 
-    <!-- Header -->
+    <!-- home Section -->
+    <div id="home-section" class="page-section">
     <header class="header">
       <div class="header-text">
         <h1>Hello, @{{ user.username }}</h1>
@@ -63,7 +65,6 @@
         <div id="search-results" class="search-results"></div>
       </div>
     </header>
-
     <!-- Profile Section -->
     <section class="profile-section">
       <img src="{{ user.profile_url }}" alt="Profile" class="profile-pic" />
@@ -72,8 +73,12 @@
         <p>{{ user.bio }}</p>
       </div>
     </section>
+    </div>
+
+    
 
     <!-- Messages Section -->
+    <div id="messages-section" class="page-section" style="display: none;">
     <section class="message-section">
       <h3>Recent Messages</h3>
       <ul class="message-list">
@@ -97,8 +102,10 @@
         {% endfor %}
       </ul>
     </section>
+    </div>
 
     <!-- Community Section -->
+    <div id="community-section" class="page-section" style="display: none;">
     <section class="community-section">
       <h3>Your Community</h3>
       <ul>
@@ -116,8 +123,10 @@
         </li>
       </ul>
     </section>
+    </div>
 
     <!-- Post Section -->
+    <div id="post-section" class="page-section" style="display: none;">
     <section class="post-section">
       <h3>Create a Post</h3>
       <form>
@@ -126,8 +135,8 @@
         <button type="submit">Post</button>
       </form>
     </section>
-
-  </div>
+    </div>
+    </div>
 
   <script src="{% static 'home/js/profile.js' %}"></script>
 </body>

@@ -85,11 +85,16 @@ body {
   display: flex;
   flex-direction: column;
   gap: 30px;
+  min-height: 100vh;          /* ✅ forces height to match screen */
+  box-sizing: border-box;
+  overflow-x: hidden;         /* ✅ prevents horizontal scrolling glitches */
 }
+
 
 /* ─────────────────────────────── */
 /* Header                         */
 /* ─────────────────────────────── */
+
 .header {
   display: flex;
   flex-wrap: wrap;
@@ -152,6 +157,13 @@ body {
   font-size: 15px;
   color: #636e72;
 }
+
+#home-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;         
+  padding-bottom: 20px; 
+} 
 
 /* ─────────────────────────────── */
 /* Message Section                */

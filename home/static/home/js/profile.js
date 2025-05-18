@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+  // 🔍 Search functionality
   const searchInput = document.querySelector(".search-bar");
   const resultsContainer = document.getElementById("search-results");
 
@@ -34,5 +35,34 @@ document.addEventListener("DOMContentLoaded", function () {
           resultsContainer.appendChild(div);
         });
       });
+  });
+
+  // 🧭 Section toggle functionality
+  const navLinks = document.querySelectorAll(".nav-link");
+  const allSections = document.querySelectorAll(".page-section");
+
+  navLinks.forEach(link => {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      const targetId = this.getAttribute("data-target");
+
+      // Hide all page sections
+      allSections.forEach(section => {
+        section.style.display = "none";
+      });
+
+      // Show the target section
+      const targetSection = document.getElementById(targetId);
+      if (targetSection) {
+  // Restore flex display for home-section, block for others
+        if (targetId === "home-section") {
+          targetSection.style.display = "flex";
+          targetSection.style.flexDirection = "column"; // preserve layout
+          targetSection.style.gap = "30px";             // reapply spacing if removed
+        } else {
+          targetSection.style.display = "block";
+        }
+      }
+    });
   });
 });
