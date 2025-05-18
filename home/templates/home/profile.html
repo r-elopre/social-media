@@ -1,88 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   {% load static %}
-  <title>User Profile - Social Media</title>
-  <link rel="stylesheet" href="{% static 'home/profile.css' %}">
+  <title>Profile | ChatGF</title>
+  <link rel="stylesheet" href="{% static 'home/profile.css' %}" />
 </head>
 <body>
-  <header class="header">
-  <h1>Welcome, @{{ user.username }} </h1>
-  <input type="search" placeholder="Search users..." class="search-bar">
-  <div id="search-results" class="search-results"></div>
-  <a href="{% url 'logout' %}" class="logout-btn">Log Out</a>
 
-</header>
-
-<main class="main-container">
-  <!-- Profile Section -->
-  <section class="profile-section">
-    <img src="{{ user.profile_url }}" alt="Profile Picture" class="profile-pic">
-    <div class="profile-info">
-      <h2>{{ user.full_name }}</h2>
-      <p>{{ user.bio }}</p>
-    </div>
-  </section>
-
-
-
-  <!-- Message Section -->
-<ul class="message-list">
-  {% for msg in messages %}
-  <li>
-    <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" class="message-avatar">
-    <div>
-      <strong>{{ msg.sender_name }}</strong><br>
-      <span>
-        {% if msg.is_you %}
-          <strong style="color: #0984e3;">You:</strong>
-        {% endif %}
-        {{ msg.content }}
-      </span><br>
-
-      <small style="color: #636e72;">🕒 {{ msg.time }}</small>
-    </div>
-  </li>
-  {% empty %}
-  <li>No recent messages.</li>
-  {% endfor %}
-</ul>
-
-
-    <!-- Feedback Section -->
-<section class="community-section">
-  <h3>Your Community</h3>
-  <ul>
+  <!-- Navigation Drawer -->
+  <nav class="drawer">
+  <div class="drawer-header">
+    <h2>GLOBAL FEED</h2>
+  </div>
+  <ul class="drawer-menu">
     <li>
-      <img src="https://via.placeholder.com/40" alt="Alice" class="community-avatar">
-      <span><strong>Alice</strong> liked your recent post about UI design.</span>
+      <a href="#">
+        <span class="drawer-icon">🏠</span>
+        <span class="drawer-label">Home</span>
+      </a>
     </li>
     <li>
-      <img src="https://via.placeholder.com/40" alt="Bob" class="community-avatar">
-      <span><strong>Bob</strong> mentioned you in a comment: "John really helped me understand Firebase!"</span>
+      <a href="#">
+        <span class="drawer-icon">📨</span>
+        <span class="drawer-label">Messages</span>
+      </a>
     </li>
     <li>
-      <img src="https://via.placeholder.com/40" alt="Clara" class="community-avatar">
-      <span><strong>Clara</strong> started following you.</span>
+      <a href="#">
+        <span class="drawer-icon">👥</span>
+        <span class="drawer-label">Community</span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <span class="drawer-icon">📝</span>
+        <span class="drawer-label">Create Post</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'logout' %}" class="logout-btn">
+        <span class="drawer-icon">🚪</span>
+        <span class="drawer-label">Log Out</span>
+      </a>
     </li>
   </ul>
-</section>
+</nav>
+
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-text">
+        <h1>Hello, @{{ user.username }}</h1>
+        <p>Explore your profile, chat, and connect with your network!</p>
+      </div>
+      <div class="search-container">
+        <input type="search" class="search-bar" placeholder="Search users..." />
+        <div id="search-results" class="search-results"></div>
+      </div>
+    </header>
+
+    <!-- Profile Section -->
+    <section class="profile-section">
+      <img src="{{ user.profile_url }}" alt="Profile" class="profile-pic" />
+      <div class="profile-info">
+        <h2>{{ user.full_name }}</h2>
+        <p>{{ user.bio }}</p>
+      </div>
+    </section>
+
+    <!-- Messages Section -->
+    <section class="message-section">
+      <h3>Recent Messages</h3>
+      <ul class="message-list">
+        {% for msg in messages %}
+        <li>
+          <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" class="message-avatar" />
+          <div>
+            <strong>
+              {% if msg.is_you %}
+                You
+              {% else %}
+                {{ msg.sender_name }}
+              {% endif %}
+            </strong>
+            <p>{{ msg.content }}</p>
+            <small>🕒 {{ msg.time }}</small>
+          </div>
+        </li>
+        {% empty %}
+        <li>No recent messages.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <!-- Community Section -->
+    <section class="community-section">
+      <h3>Your Community</h3>
+      <ul>
+        <li>
+          <img src="https://via.placeholder.com/40" alt="Alice" class="community-avatar" />
+          <span><strong>Alice</strong> liked your recent post about UI design.</span>
+        </li>
+        <li>
+          <img src="https://via.placeholder.com/40" alt="Bob" class="community-avatar" />
+          <span><strong>Bob</strong> mentioned you: "John really helped me understand Firebase!"</span>
+        </li>
+        <li>
+          <img src="https://via.placeholder.com/40" alt="Clara" class="community-avatar" />
+          <span><strong>Clara</strong> started following you.</span>
+        </li>
+      </ul>
+    </section>
 
     <!-- Post Section -->
     <section class="post-section">
       <h3>Create a Post</h3>
       <form>
         <textarea placeholder="What's on your mind?" required></textarea>
-        <input type="file">
+        <input type="file" />
         <button type="submit">Post</button>
       </form>
     </section>
 
-  </main>
+  </div>
 
   <script src="{% static 'home/js/profile.js' %}"></script>
-
 </body>
 </html>
