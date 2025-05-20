@@ -230,7 +230,6 @@ def searched_profile_view(request, username):
 
         receiver_data = response.data
 
-        # If POST, insert new message
         if request.method == "POST":
             sender_id = request.session.get("user_id")
             receiver_id = receiver_data["user_id"]
@@ -245,6 +244,9 @@ def searched_profile_view(request, username):
                     }).execute()
                 except Exception as insert_error:
                     print("Message insert failed:", insert_error)
+
+            # ✅ Redirect after POST to avoid form resubmission warning
+            return redirect("searched_profile", username=username)
 
         return render(request, "home/searched_profile.html", {
             "user": receiver_data
