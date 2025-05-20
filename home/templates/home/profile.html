@@ -82,25 +82,25 @@
     <section class="message-section">
       <h3>Recent Messages</h3>
       <ul class="message-list">
-        {% for msg in messages %}
-        <li>
-          <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" class="message-avatar" />
-          <div>
-            <strong>
-              {% if msg.is_you %}
-                You
-              {% else %}
-                {{ msg.sender_name }}
-              {% endif %}
-            </strong>
-            <p>{{ msg.content }}</p>
-            <small>🕒 {{ msg.time }}</small>
-          </div>
-        </li>
-        {% empty %}
-        <li>No recent messages.</li>
-        {% endfor %}
-      </ul>
+      {% for msg in messages %}
+      <li>
+        <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" class="message-avatar" />
+        <div>
+          <strong>{{ msg.sender_name }}</strong>
+          <p>
+            {% if msg.is_you %}
+              You: 
+            {% endif %}
+            {{ msg.content }}
+          </p>
+          <small>🕒 {{ msg.time }}</small>
+        </div>
+      </li>
+      {% empty %}
+      <li>No recent messages.</li>
+      {% endfor %}
+    </ul>
+
     </section>
     </div>
 

@@ -13,7 +13,74 @@ import uuid
 
 
 def homepage_view(request):
-    return render(request, 'home/index.html')
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("signin")
+
+    try:
+        user_info = (
+            supabase
+            .table("accounts")
+            .select("*")
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+
+        messages_response = (
+            supabase
+            .table("chats")
+            .select("*")
+            .or_(
+                f"receiver_id.eq.{user_id},sender_id.eq.{user_id}"
+            )
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        seen_users = set()
+        messages = []
+        manila = timezone("Asia/Manila")
+
+        for msg in messages_response.data:
+            is_sender = msg["sender_id"] == user_id
+            other_user_id = msg["receiver_id"] if is_sender else msg["sender_id"]
+
+            if other_user_id in seen_users:
+                continue
+            seen_users.add(other_user_id)
+
+            other_user_info = (
+                supabase
+                .table("accounts")
+                .select("full_name, profile_url")
+                .eq("user_id", other_user_id)
+                .single()
+                .execute()
+            )
+
+            local_time = datetime.datetime.fromisoformat(
+                msg["created_at"].replace("Z", "+00:00")
+            ).astimezone(manila).strftime("%b %d, %Y %I:%M %p")
+
+            messages.append({
+                "sender_id": other_user_id,
+                "sender_name": other_user_info.data["full_name"],
+                "sender_avatar": other_user_info.data["profile_url"],
+                "content": msg["message"],
+                "time": local_time,
+                "is_you": is_sender,
+            })
+
+        return render(request, "home/profile.html", {
+            "user": user_info.data,
+            "messages": messages
+        })
+
+    except Exception as e:
+        print("Error loading profile:", e)
+        return redirect("signin")
+
 
 def logout_view(request):
     request.session.flush()  # Clear all session data
@@ -108,74 +175,14 @@ def signin_view(request):
                 .table("accounts")
                 .select("*")
                 .eq("username", username)
-                .eq("password", password)  # ⚠️ Plain text comparison (not safe for production)
+                .eq("password", password)  # ⚠️ Plain text comparison
                 .single()
                 .execute()
             )
 
             if response.data:
-                request.session["user_id"] = response.data["user_id"]  # ✅ Add this
-                try:
-                    user_id = response.data["user_id"]
-                    messages_response = (
-                        supabase
-                        .table("chats")
-                        .select("*")
-                        .or_(
-                            f"receiver_id.eq.{user_id},sender_id.eq.{user_id}"
-                        )
-                        .order("created_at", desc=True)
-                        .execute()
-                    )
-
-
-                    manila = timezone("Asia/Manila")
-                    messages = []
-                    seen_users = set()
-                    messages = []
-
-                    for msg in messages_response.data:
-                        is_sender = msg["sender_id"] == user_id
-                        other_user_id = msg["receiver_id"] if is_sender else msg["sender_id"]
-
-                        if other_user_id in seen_users:
-                            continue
-                        seen_users.add(other_user_id)
-
-                        # Fetch other user info
-                        other_user_info = (
-                            supabase
-                            .table("accounts")
-                            .select("full_name, profile_url")
-                            .eq("user_id", other_user_id)
-                            .single()
-                            .execute()
-                        )
-
-                        # Format time
-                        raw_time = datetime.datetime.fromisoformat(msg["created_at"].replace("Z", "+00:00"))
-                        local_time = raw_time.astimezone(timezone("Asia/Manila")).strftime("%b %d, %Y %I:%M %p")
-
-                        messages.append({
-                            "sender_id": other_user_id,
-                            "sender_name": other_user_info.data["full_name"],
-                            "sender_avatar": other_user_info.data["profile_url"],
-                            "content": msg["message"],
-                            "time": local_time,
-                            "is_you": is_sender, 
-                        })
-
-
-
-                except Exception as e:
-                    print("Error fetching messages:", e)
-                    messages = []
-
-                return render(request, "home/profile.html", {
-                    "user": response.data,
-                    "messages": messages
-                })
-
+                request.session["user_id"] = response.data["user_id"]
+                return redirect("home")  # ✅ Redirect to avoid form resubmission
             else:
                 return render(request, "home/index.html", {"error": "❌ Invalid credentials."})
 
@@ -184,7 +191,6 @@ def signin_view(request):
             return render(request, "home/index.html", {"error": "⚠️ Something went wrong. Try again."})
 
     return render(request, "home/index.html")
-
 
 
 @csrf_exempt
