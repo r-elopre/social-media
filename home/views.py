@@ -256,3 +256,85 @@ def searched_profile_view(request, username):
         return render(request, "home/searched_profile.html", {
             "error": f"Error fetching user: {str(e)}"
         })
+
+
+@csrf_exempt
+def fetch_chat_messages_view(request):
+    user_id = request.session.get("user_id")
+    receiver_id = request.GET.get("receiver_id")
+    before_id = request.GET.get("before_id")  # Optional: for pagination
+    limit = int(request.GET.get("limit", 10))  # Default to 10
+
+    if not user_id or not receiver_id:
+        return JsonResponse({'status': 'error', 'message': 'Missing user or receiver'}, status=400)
+
+    try:
+        # Build base filter for both directions of the convo
+        query = (
+            supabase
+            .table("chats")
+            .select("*")
+            .or_(
+                f"and(sender_id.eq.{user_id},receiver_id.eq.{receiver_id}),"
+                f"and(sender_id.eq.{receiver_id},receiver_id.eq.{user_id})"
+            )
+        )
+
+        # Apply 'before_id' for pagination if provided
+        if before_id:
+            query = query.lt("id", int(before_id))
+
+        # Sort by newest first, limit to 10
+        messages_response = query.order("id", desc=True).limit(limit).execute()
+        manila = timezone("Asia/Manila")
+
+        messages = []
+        for msg in reversed(messages_response.data):  # Reverse to show oldest to newest
+            local_time = datetime.datetime.fromisoformat(
+                msg["created_at"].replace("Z", "+00:00")
+            ).astimezone(manila).strftime("%b %d, %Y %I:%M %p")
+
+            messages.append({
+                "id": msg["id"],
+                "sender_id": msg["sender_id"],
+                "receiver_id": msg["receiver_id"],
+                "message": msg["message"],
+                "time": local_time,
+                "is_you": msg["sender_id"] == user_id
+            })
+
+        return JsonResponse(messages, safe=False)
+
+    except Exception as e:
+        print("Error fetching chat messages:", e)
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@csrf_exempt
+def send_chat_message_view(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Only POST allowed."}, status=405)
+
+    try:
+        import json
+        data = json.loads(request.body.decode("utf-8"))
+
+        sender_id = request.session.get("user_id")
+        receiver_id = data.get("receiver_id")
+        message = data.get("message", "").strip()
+
+        if not sender_id or not receiver_id or not message:
+            return JsonResponse({"status": "error", "message": "Missing fields."}, status=400)
+
+        # Insert new chat record into Supabase
+        supabase.table("chats").insert({
+            "sender_id": sender_id,
+            "receiver_id": receiver_id,
+            "message": message
+        }).execute()
+
+        return JsonResponse({"status": "success", "message": "Message sent."})
+
+    except Exception as e:
+        print("Send message failed:", e)
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)

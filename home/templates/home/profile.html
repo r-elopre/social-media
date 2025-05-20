@@ -84,7 +84,8 @@
       <ul class="message-list">
       {% for msg in messages %}
       <li>
-        <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" class="message-avatar" />
+        <img src="{{ msg.sender_avatar }}" alt="{{ msg.sender_name }}" class="message-avatar" data-user-id="{{ msg.sender_id }}" />
+
         <div>
           <strong>{{ msg.sender_name }}</strong>
           <p>
@@ -137,6 +138,30 @@
     </section>
     </div>
     </div>
+
+    <!-- Floating Chat Box -->
+<div id="floating-chat-box" class="chat-box" style="display: none;">
+  <!-- Header -->
+  <div class="chat-header">
+    <div class="chat-user-info">
+      <img id="chat-user-avatar" src="" alt="Avatar" class="chat-avatar" />
+      <span id="chat-user-name" class="chat-name">User</span>
+    </div>
+    <button class="chat-close-btn" onclick="closeChatBox()">✖</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="chat-messages" class="chat-messages">
+    <div id="chat-loader" class="chat-loader">Loading...</div>
+  </div>
+
+  <!-- Message Input -->
+  <form id="chat-form" class="chat-form">
+    <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" required />
+    <button type="submit">Send</button>
+  </form>
+</div>
+
 
   <script src="{% static 'home/js/profile.js' %}"></script>
 </body>
