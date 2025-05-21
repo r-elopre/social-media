@@ -69,7 +69,12 @@
     <section class="profile-section">
       <img src="{{ user.profile_url }}" alt="Profile" class="profile-pic" />
       <div class="profile-info">
-        <h2>{{ user.full_name }}</h2>
+        <h2>
+          <a href="{% url 'searched_profile' user.username %}" class="profile-link">
+            {{ user.full_name }}
+          </a>
+        </h2>
+
         <p>{{ user.bio }}</p>
       </div>
     </section>
@@ -127,17 +132,23 @@
     </div>
 
     <!-- Post Section -->
-    <div id="post-section" class="page-section" style="display: none;">
-    <section class="post-section">
-      <h3>Create a Post</h3>
-      <form>
-        <textarea placeholder="What's on your mind?" required></textarea>
-        <input type="file" />
-        <button type="submit">Post</button>
-      </form>
-    </section>
-    </div>
-    </div>
+<div id="post-section" class="page-section" style="display: none;">
+  <section class="post-section">
+    <h3>Create a Post</h3>
+
+    <form id="create-post-form" enctype="multipart/form-data">
+      <textarea id="post-content" placeholder="What's on your mind?" required></textarea>
+
+      <input type="file" id="post-media" accept="image/*,video/*" />
+      <div id="media-preview" class="media-preview"></div>
+
+      <button type="submit">Post</button>
+      <div id="post-status" class="status-message"></div>
+    </form>
+  </section>
+</div>
+
+
 
     <!-- Floating Chat Box -->
 <div id="floating-chat-box" class="chat-box" style="display: none;">

@@ -10,6 +10,7 @@ from pytz import timezone
 import datetime
 import os
 import uuid
+from dateutil import parser
 
 
 def homepage_view(request):
@@ -214,51 +215,6 @@ def search_users_view(request):
 
 
 @csrf_exempt
-def searched_profile_view(request, username):
-    try:
-        # Fetch receiver data
-        response = (
-            supabase
-            .table("accounts")
-            .select("*")
-            .eq("username", username)
-            .single()
-            .execute()
-        )
-        if not response.data:
-            return render(request, "home/searched_profile.html", {"error": "User not found"})
-
-        receiver_data = response.data
-
-        if request.method == "POST":
-            sender_id = request.session.get("user_id")
-            receiver_id = receiver_data["user_id"]
-            message = request.POST.get("message", "").strip()
-
-            if sender_id and message:
-                try:
-                    supabase.table("chats").insert({
-                        "sender_id": sender_id,
-                        "receiver_id": receiver_id,
-                        "message": message
-                    }).execute()
-                except Exception as insert_error:
-                    print("Message insert failed:", insert_error)
-
-            # ✅ Redirect after POST to avoid form resubmission warning
-            return redirect("searched_profile", username=username)
-
-        return render(request, "home/searched_profile.html", {
-            "user": receiver_data
-        })
-
-    except Exception as e:
-        return render(request, "home/searched_profile.html", {
-            "error": f"Error fetching user: {str(e)}"
-        })
-
-
-@csrf_exempt
 def fetch_chat_messages_view(request):
     user_id = request.session.get("user_id")
     receiver_id = request.GET.get("receiver_id")
@@ -338,3 +294,164 @@ def send_chat_message_view(request):
     except Exception as e:
         print("Send message failed:", e)
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@csrf_exempt
+def create_post_view(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Only POST method allowed."}, status=405)
+
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"status": "error", "message": "User not authenticated."}, status=401)
+
+    content = request.POST.get("content", "").strip()
+    media_file = request.FILES.get("media")
+
+    if not content:
+        return JsonResponse({"status": "error", "message": "Content cannot be empty."}, status=400)
+
+    media_url = ""
+
+    # ✅ Upload to Supabase Storage if media exists
+    if media_file:
+        try:
+            file_ext = os.path.splitext(media_file.name)[-1]
+            unique_path = f"posts/{uuid.uuid4()}{file_ext}"
+            file_bytes = media_file.read()
+
+            supabase.storage.from_("files").upload(
+                path=unique_path,
+                file=file_bytes,
+                file_options={"content-type": media_file.content_type}
+            )
+
+            media_url = supabase.storage.from_("files").get_public_url(unique_path)
+
+        except Exception as e:
+            print("Media upload failed:", e)
+            return JsonResponse({"status": "error", "message": "Failed to upload media."}, status=500)
+
+    # ✅ Insert into `posts` table
+    try:
+        supabase.table("posts").insert({
+            "user_id": user_id,
+            "content": content,
+            "media_url": media_url,
+            "created_at": datetime.datetime.utcnow().isoformat()
+        }).execute()
+
+        return JsonResponse({"status": "success", "message": "Post created."})
+
+    except Exception as e:
+        print("Database insert failed:", e)
+        return JsonResponse({"status": "error", "message": "Failed to save post."}, status=500)
+    
+
+
+@csrf_exempt
+def searched_profile_view(request, username):
+    try:
+        # Fetch receiver data
+        response = (
+            supabase
+            .table("accounts")
+            .select("*")
+            .eq("username", username)
+            .single()
+            .execute()
+        )
+        if not response.data:
+            return render(request, "home/searched_profile.html", {"error": "User not found"})
+
+        receiver_data = response.data
+
+        # Handle message submission
+        if request.method == "POST":
+            sender_id = request.session.get("user_id")
+            receiver_id = receiver_data["user_id"]
+            message = request.POST.get("message", "").strip()
+
+            if sender_id and message:
+                try:
+                    supabase.table("chats").insert({
+                        "sender_id": sender_id,
+                        "receiver_id": receiver_id,
+                        "message": message
+                    }).execute()
+                except Exception as insert_error:
+                    print("Message insert failed:", insert_error)
+
+            return redirect("searched_profile", username=username)
+
+        # Fetch latest 5 posts only (for lazy loading)
+        posts_response = (
+            supabase
+            .table("posts")
+            .select("*")
+            .eq("user_id", receiver_data["user_id"])
+            .order("created_at", desc=True)
+            .limit(5)
+            .execute()
+        )
+        # Convert created_at to real datetime
+        manila = timezone("Asia/Manila")
+        raw_posts = posts_response.data if posts_response.data else []
+        posts = []
+
+        for post in raw_posts:
+            try:
+                post["created_at"] = parser.isoparse(post["created_at"]).astimezone(manila)
+            except Exception as e:
+                print("Failed to parse post timestamp:", e)
+                post["created_at"] = timezone.now()
+            posts.append(post)
+
+        return render(request, "home/searched_profile.html", {
+            "user": receiver_data,
+            "posts": posts
+        })
+
+    except Exception as e:
+        return render(request, "home/searched_profile.html", {
+            "error": f"Error fetching user: {str(e)}"
+        })
+
+
+
+
+@csrf_exempt
+def load_user_posts_view(request, username):
+    try:
+        offset = int(request.GET.get("offset", 0))
+        limit = 5
+
+        # Find the user by username
+        user_response = (
+            supabase
+            .table("accounts")
+            .select("user_id")
+            .eq("username", username)
+            .single()
+            .execute()
+        )
+        if not user_response.data:
+            return JsonResponse({"error": "User not found"}, status=404)
+
+        user_id = user_response.data["user_id"]
+
+        # Fetch more posts
+        posts_response = (
+            supabase
+            .table("posts")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+
+        return JsonResponse(posts_response.data, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

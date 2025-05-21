@@ -165,6 +165,18 @@ body {
   padding-bottom: 20px; 
 } 
 
+.profile-link {
+  text-decoration: none;
+  color: #2d3436;
+  transition: color 0.2s ease;
+}
+
+.profile-link:hover {
+  color: #0984e3;
+  text-decoration: underline;
+}
+
+
 /* ─────────────────────────────── */
 /* Message Section                */
 /* ─────────────────────────────── */
@@ -317,6 +329,28 @@ body {
 .post-section button:hover {
   background-color: #066bc2;
 }
+
+.media-preview {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.media-preview img,
+.media-preview video {
+  max-width: 100%;
+  max-height: 350px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+  background-color: #f0f0f0;
+  padding: 4px;
+}
+
+
 
 /* ─────────────────────────────── */
 /* Logout Button                  */

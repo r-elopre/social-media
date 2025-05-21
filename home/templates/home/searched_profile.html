@@ -7,7 +7,8 @@
   <title>Searched Profile - Social Media</title>
   <link rel="stylesheet" href="{% static 'home/searched_profile.css' %}">
 </head>
-<body>
+<body data-username="{{ user.username }}">
+
 
 <main class="main-container">
   <!-- Profile Section -->
@@ -28,26 +29,44 @@
     </form>
   </section>
 
-  <!-- Community Section -->
-  <section class="community-section">
-    <h3>{{ user.full_name }}'s Community</h3>
-    <ul>
-      <li>
-        <img src="https://via.placeholder.com/40" alt="Alice" class="community-avatar">
-        <span><strong>Alice</strong> liked John's recent post about UI design.</span>
-      </li>
-      <li>
-        <img src="https://via.placeholder.com/40" alt="Bob" class="community-avatar">
-        <span><strong>Bob</strong> mentioned John in a comment: "John really helped me understand Firebase!"</span>
-      </li>
-      <li>
-        <img src="https://via.placeholder.com/40" alt="Clara" class="community-avatar">
-        <span><strong>Clara</strong> started following John.</span>
-      </li>
-    </ul>
-  </section>
+  <!-- User Posts Section -->
+<section class="user-posts-section">
+  <h3>{{ user.full_name }}'s Posts</h3>
+
+  {% if posts %}
+    <div class="post-grid">
+      {% for post in posts %}
+        <div class="post-card">
+          <p class="post-content">{{ post.content }}</p>
+
+        
+
+          {% if post.media_url %}
+            {% with post.media_url|lower as url %}
+              {% if ".mp4" in url or ".webm" in url %}
+                <video controls class="post-media" src="{{ post.media_url }}" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+              {% else %}
+                <img src="{{ post.media_url }}" alt="Post media" class="post-media" />
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+
+          <p class="post-time">🕒 {{ post.created_at|timesince }} ago</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="no-posts">No posts yet.</p>
+  {% endif %}
+</section>
+
+
 </main>
 
+
 <script src="{% static 'home/js/profile.js' %}"></script>
+
 </body>
 </html>

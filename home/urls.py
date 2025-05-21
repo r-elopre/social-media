@@ -6,6 +6,8 @@ from .views import searched_profile_view
 from .views import logout_view
 from .views import fetch_chat_messages_view
 from .views import send_chat_message_view
+from .views import create_post_view
+from .views import load_user_posts_view
 
 
 
@@ -19,6 +21,9 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('chat/messages/', fetch_chat_messages_view, name='fetch_chat_messages'),
     path('chat/send/', send_chat_message_view, name='send_chat_message'),
+    path("create-post/", create_post_view, name="create_post"),
+    path("user-posts/<str:username>/", load_user_posts_view, name="load_user_posts"),
+
 
 
 

@@ -208,5 +208,154 @@ function getCookie(name) {
   return cookieValue;
 }
 
+
+
+  // 📝 Handle post creation
+  const postForm = document.getElementById("create-post-form");
+  const postContent = document.getElementById("post-content");
+  const postMedia = document.getElementById("post-media");
+  const postStatus = document.getElementById("post-status");
+
+  postForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const content = postContent.value.trim();
+    const mediaFile = postMedia.files[0];
+
+    if (!content) {
+      postStatus.textContent = "Please enter some text.";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("content", content);
+    if (mediaFile) {
+      formData.append("media", mediaFile);
+    }
+
+    fetch("/create-post/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        postStatus.textContent = "✅ Post created!";
+        postForm.reset();
+      } else {
+        postStatus.textContent = "❌ " + (data.message || "Something went wrong.");
+      }
+    })
+    .catch(err => {
+      console.error("Post error:", err);
+      postStatus.textContent = "❌ Network error. Try again.";
+    });
+  });
+
+    // 🎞️ Media preview
+  const mediaPreview = document.getElementById("media-preview");
+
+  postMedia.addEventListener("change", function () {
+    mediaPreview.innerHTML = ""; // Clear existing
+
+    const file = this.files[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+
+    if (file.type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.src = url;
+      mediaPreview.appendChild(img);
+    } else if (file.type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.src = url;
+      video.controls = true;
+      mediaPreview.appendChild(video);
+    } else {
+      mediaPreview.textContent = "Unsupported file type.";
+    }
+  });
+
+
+
+
+  // 🔁 Lazy Load User Posts (if post-grid exists)
+const postGrid = document.querySelector(".post-grid");
+if (postGrid) {
+  const username = document.body.getAttribute("data-username");
+  let offset = postGrid.children.length;
+  let isLoading = false;
+  let endOfPosts = false;
+
+  window.addEventListener("scroll", async () => {
+    if (endOfPosts || isLoading) return;
+
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+      isLoading = true;
+      const loader = document.createElement("p");
+      loader.textContent = "Loading more posts...";
+      loader.style.textAlign = "center";
+      postGrid.appendChild(loader);
+
+      try {
+        const response = await fetch(`/user-posts/${username}/?offset=${offset}`);
+        const data = await response.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          endOfPosts = true;
+          loader.remove();
+          return;
+        }
+
+        data.forEach(post => {
+          const card = document.createElement("div");
+          card.className = "post-card";
+
+          const content = document.createElement("p");
+          content.className = "post-content";
+          content.textContent = post.content;
+          card.appendChild(content);
+
+          if (post.media_url) {
+            if (post.media_url.toLowerCase().endsWith(".mp4")) {
+              const video = document.createElement("video");
+              video.src = post.media_url;
+              video.controls = true;
+              video.className = "post-media";
+              card.appendChild(video);
+            } else {
+              const img = document.createElement("img");
+              img.src = post.media_url;
+              img.alt = "Post media";
+              img.className = "post-media";
+              card.appendChild(img);
+            }
+          }
+
+          const time = document.createElement("p");
+          time.className = "post-time";
+          time.textContent = "🕒 " + new Date(post.created_at).toLocaleString();
+          card.appendChild(time);
+
+          postGrid.appendChild(card);
+        });
+
+        offset += data.length;
+        loader.remove();
+        isLoading = false;
+      } catch (err) {
+        console.error("Failed to load more posts", err);
+        loader.remove();
+      }
+    }
+  });
+}
+
+
+
 });
 
