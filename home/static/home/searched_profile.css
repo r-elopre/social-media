@@ -224,3 +224,80 @@ video.post-media {
   background-color: #000;
 }
 
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.post-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}
+
+.post-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-author {
+  font-weight: 600;
+  font-size: 15px;
+  color: #2d3436;
+  margin: 0;
+}
+
+.post-time {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+}
+
+
+.post-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.post-actions form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.like-button {
+  background-color: transparent;
+  border: none;
+  font-size: 16px;
+  color: #e74c3c;
+  cursor: pointer;
+}
+
+.comment-form input[type="text"] {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.comment-form button {
+  padding: 6px 12px;
+  border: none;
+  background-color: #3498db;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.like-count,
+.comment-count {
+  font-size: 13px;
+  color: #666;
+  margin-left: 8px;
+}

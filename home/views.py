@@ -11,6 +11,8 @@ import datetime
 import os
 import uuid
 from dateutil import parser
+from django.shortcuts import redirect
+from zoneinfo import ZoneInfo
 
 
 def homepage_view(request):
@@ -352,7 +354,7 @@ def create_post_view(request):
 @csrf_exempt
 def searched_profile_view(request, username):
     try:
-        # Fetch receiver data
+        # Fetch receiver account by username
         response = (
             supabase
             .table("accounts")
@@ -365,10 +367,11 @@ def searched_profile_view(request, username):
             return render(request, "home/searched_profile.html", {"error": "User not found"})
 
         receiver_data = response.data
+        user_id = request.session.get("user_id")
 
-        # Handle message submission
+        # Handle chat message sending
         if request.method == "POST":
-            sender_id = request.session.get("user_id")
+            sender_id = user_id
             receiver_id = receiver_data["user_id"]
             message = request.POST.get("message", "").strip()
 
@@ -384,7 +387,7 @@ def searched_profile_view(request, username):
 
             return redirect("searched_profile", username=username)
 
-        # Fetch latest 5 posts only (for lazy loading)
+        # Fetch latest 5 posts for that user
         posts_response = (
             supabase
             .table("posts")
@@ -394,18 +397,52 @@ def searched_profile_view(request, username):
             .limit(5)
             .execute()
         )
-        # Convert created_at to real datetime
-        manila = timezone("Asia/Manila")
+
+        manila = ZoneInfo("Asia/Manila")
         raw_posts = posts_response.data if posts_response.data else []
         posts = []
 
         for post in raw_posts:
             try:
-                post["created_at"] = parser.isoparse(post["created_at"]).astimezone(manila)
-            except Exception as e:
-                print("Failed to parse post timestamp:", e)
-                post["created_at"] = timezone.now()
-            posts.append(post)
+                post_id = str(post.get("id", ""))
+                # Safe timestamp parsing
+                try:
+                    post["created_at"] = parser.isoparse(post.get("created_at")).astimezone(manila)
+                except Exception as e:
+                    print(f"Timestamp parse failed for post {post_id}:", e)
+                    post["created_at"] = django_now()
+
+                # Default values
+                post["like_count"] = 0
+                post["liked_by_user"] = False
+                post["comment_count"] = 0
+
+                # Count likes
+                try:
+                    likes = supabase.table("likes").select("id").eq("post_id", post_id).execute()
+                    post["like_count"] = len(likes.data or [])
+                except Exception as e:
+                    print(f"Like count failed for post {post_id}:", e)
+
+                # Check if current user already liked this post
+                if user_id:
+                    try:
+                        liked = supabase.table("likes").select("id").eq("post_id", post_id).eq("user_id", user_id).execute()
+                        post["liked_by_user"] = bool(liked.data)
+                    except Exception as e:
+                        print(f"Like check failed for post {post_id}:", e)
+
+                # Count comments
+                try:
+                    comments = supabase.table("comments").select("id").eq("post_id", post_id).execute()
+                    post["comment_count"] = len(comments.data or [])
+                except Exception as e:
+                    print(f"Comment count failed for post {post_id}:", e)
+
+                posts.append(post)
+
+            except Exception as post_error:
+                print(f"Post enrichment failed: {post_error}")
 
         return render(request, "home/searched_profile.html", {
             "user": receiver_data,
@@ -413,11 +450,10 @@ def searched_profile_view(request, username):
         })
 
     except Exception as e:
+        print("Main view failed:", e)
         return render(request, "home/searched_profile.html", {
             "error": f"Error fetching user: {str(e)}"
         })
-
-
 
 
 @csrf_exempt
@@ -455,3 +491,55 @@ def load_user_posts_view(request, username):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+    
+
+
+@csrf_exempt
+def like_post_view(request, post_id):
+    user_id = request.session.get("user_id")
+    if request.method != "POST" or not user_id:
+        return redirect("signin")
+
+    # Prevent duplicate likes
+    existing = (
+        supabase
+        .table("likes")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("post_id", post_id)
+        .execute()
+    )
+
+    if existing.data:
+        return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+
+    # Insert like
+    supabase.table("likes").insert({
+        "user_id": user_id,
+        "post_id": post_id,
+    }).execute()
+
+    return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+
+
+
+@csrf_exempt
+def comment_post_view(request, post_id):
+    user_id = request.session.get("user_id")
+    if request.method != "POST" or not user_id:
+        return redirect("signin")
+
+    comment_text = request.POST.get("comment", "").strip()
+    if not comment_text:
+        return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+
+    # Insert comment
+    supabase.table("comments").insert({
+        "user_id": user_id,
+        "post_id": post_id,
+        "comment": comment_text,
+    }).execute()
+
+    return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+
+

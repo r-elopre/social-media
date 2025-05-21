@@ -8,6 +8,7 @@ from .views import fetch_chat_messages_view
 from .views import send_chat_message_view
 from .views import create_post_view
 from .views import load_user_posts_view
+from .views import like_post_view, comment_post_view
 
 
 
@@ -23,6 +24,9 @@ urlpatterns = [
     path('chat/send/', send_chat_message_view, name='send_chat_message'),
     path("create-post/", create_post_view, name="create_post"),
     path("user-posts/<str:username>/", load_user_posts_view, name="load_user_posts"),
+    path("like-post/<int:post_id>/", like_post_view, name="like_post"),
+    path("comment-post/<int:post_id>/", comment_post_view, name="comment_post"),
+
 
 
 
