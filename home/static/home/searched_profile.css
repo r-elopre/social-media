@@ -13,6 +13,12 @@ body {
   padding: 20px;
 }
 
+@media (max-width: 576px) {
+  body {
+    padding: 0 !important;
+  }
+}
+
 /* Main Layout */
 .main-container {
   display: flex;
@@ -28,7 +34,7 @@ body {
   background-color: white;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+   box-shadow: 0 0 16px rgba(0, 0, 0, 0.50);
 }
 
 .profile-pic {
@@ -175,7 +181,9 @@ body {
 .post-card {
   background-color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.50);
+  margin-bottom: 20px;
+  transition: box-shadow 0.2s ease;
   padding: 16px;
   max-width: 600px;
   width: 100%;
@@ -183,6 +191,7 @@ body {
   flex-direction: column;
   gap: 12px;
 }
+
 
 /* Post content text */
 .post-content {
@@ -382,27 +391,51 @@ video.post-media {
 /* Responsive Design Fixes       */
 /* ───────────────────────────── */
 
+
+/* 🔁 Mobile-specific overrides */
 @media (max-width: 576px) {
-  .post-actions {
-    flex-direction: column;
+  .user-posts-section {
+    width: 100vw;
+    max-width: 100vw;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .user-posts-section h3 {
+    padding: 16px 12px;
+    text-align: left;
+  }
+
+  .post-grid {
     align-items: stretch;
   }
 
-  .post-actions .comment-form {
-    flex-direction: column;
-    align-items: stretch;
+.post-card {
+  border-radius: 0;
+  padding: 0 !important;
+  margin: 0 0 16px 0 !important;
+  background-color: #ffffff;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.50);
+
+}
+
+  .post-card:last-child {
+    margin-bottom: 0 !important;
   }
 
-  .comment-form input[type="text"] {
+  .post-card > *:not(.post-media) {
+    padding: 0 12px;
+  }
+
+  .post-media {
     width: 100%;
-    margin-bottom: 6px;
+    border-radius: 0;
+    display: block;
   }
 
-  .comment-form button {
-    width: 100%;
-  }
-
-  .post-actions .like-form {
-    justify-content: flex-start;
+  body {
+    padding: 0 !important;
   }
 }
