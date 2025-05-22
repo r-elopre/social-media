@@ -201,68 +201,115 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 📝 Post creation logic
   const postForm = document.getElementById("create-post-form");
-  const postContent = document.getElementById("post-content");
-  const postMedia = document.getElementById("post-media");
-  const postStatus = document.getElementById("post-status");
+const postContent = document.getElementById("post-content");
+const postMedia = document.getElementById("post-media");
+const postStatus = document.getElementById("post-status");
+const mediaPreview = document.getElementById("media-preview");
 
-  postForm?.addEventListener("submit", function (e) {
-    e.preventDefault();
+postForm?.addEventListener("submit", function (e) {
+  e.preventDefault();
 
-    const content = postContent.value.trim();
-    const mediaFile = postMedia.files[0];
+  const content = postContent.value.trim();
+  const mediaFile = postMedia.files[0];
 
-    if (!content) {
-      postStatus.textContent = "Please enter some text.";
-      return;
-    }
+  postStatus.textContent = "";
+  postStatus.style.color = "";
 
-    const formData = new FormData();
-    formData.append("content", content);
-    if (mediaFile) {
-      formData.append("media", mediaFile);
-    }
+  if (!content) {
+    postStatus.textContent = "❌ Please enter some text.";
+    postStatus.style.color = "red";
+    return;
+  }
 
-    fetch("/create-post/", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken")
-      },
-      body: formData
+  // Check again on submit in case user bypassed the onchange check
+  if (mediaFile && mediaFile.size > 30 * 1024 * 1024) {
+    postStatus.textContent = "❌ File should be less than 30MB.";
+    postStatus.style.color = "red";
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("content", content);
+  if (mediaFile) {
+    formData.append("media", mediaFile);
+  }
+
+  fetch("/create-post/", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        postStatus.textContent = "✅ Post created!";
+        postStatus.style.color = "green";
+        postForm.reset();
+        mediaPreview.innerHTML = "";
+        setTimeout(() => {
+          window.location.reload(); // Reload to show new post
+        }, 1000);
+      } else {
+        postStatus.textContent = "❌ " + (data.message || "Something went wrong.");
+        postStatus.style.color = "red";
+      }
     })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          postStatus.textContent = "✅ Post created!";
-          postForm.reset();
-        } else {
-          postStatus.textContent = "❌ " + (data.message || "Something went wrong.");
-        }
-      })
-      .catch(err => {
-        console.error("Post error:", err);
-        postStatus.textContent = "❌ Network error. Try again.";
-      });
-  });
+    .catch(err => {
+      console.error("Post error:", err);
+      postStatus.textContent = "❌ Network error. Try again.";
+      postStatus.style.color = "red";
+    });
+});
 
-  // 🎞️ Media preview
-  const mediaPreview = document.getElementById("media-preview");
-  postMedia?.addEventListener("change", function () {
-    mediaPreview.innerHTML = "";
-    const file = this.files[0];
-    if (!file) return;
+// 🎞️ Media preview + validation (on file select)
+postMedia?.addEventListener("change", function () {
+  mediaPreview.innerHTML = "";
+  postStatus.textContent = "";
+  postStatus.style.color = "";
 
-    const url = URL.createObjectURL(file);
-    if (file.type.startsWith("image/")) {
-      const img = document.createElement("img");
-      img.src = url;
-      mediaPreview.appendChild(img);
-    } else if (file.type.startsWith("video/")) {
-      const video = document.createElement("video");
-      video.src = url;
-      video.controls = true;
-      mediaPreview.appendChild(video);
-    } else {
-      mediaPreview.textContent = "Unsupported file type.";
+  const file = this.files[0];
+  if (!file) return;
+
+  if (file.size > 30 * 1024 * 1024) {
+    postStatus.textContent = "❌ File should be less than 30MB.";
+    postStatus.style.color = "red";
+    this.value = ""; // clear input
+    return;
+  }
+
+  const url = URL.createObjectURL(file);
+  if (file.type.startsWith("image/")) {
+    const img = document.createElement("img");
+    img.src = url;
+    mediaPreview.appendChild(img);
+  } else if (file.type.startsWith("video/")) {
+    const video = document.createElement("video");
+    video.src = url;
+    video.controls = true;
+    mediaPreview.appendChild(video);
+  } else {
+    postStatus.textContent = "❌ Unsupported file type.";
+    postStatus.style.color = "red";
+    this.value = ""; // clear input
+  }
+});
+
+// 🧠 CSRF helper
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
     }
-  });
+  }
+  return cookieValue;
+}
+
 });
