@@ -496,30 +496,51 @@ def load_user_posts_view(request, username):
 
 @csrf_exempt
 def like_post_view(request, post_id):
+    if request.method != "POST" or not request.session.get("user_id"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
+
     user_id = request.session.get("user_id")
-    if request.method != "POST" or not user_id:
-        return redirect("signin")
 
-    # Prevent duplicate likes
-    existing = (
-        supabase
-        .table("likes")
-        .select("id")
-        .eq("user_id", user_id)
-        .eq("post_id", post_id)
-        .execute()
-    )
+    try:
+        # Check if user already liked
+        existing = (
+            supabase
+            .table("likes")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("post_id", post_id)
+            .execute()
+        )
 
-    if existing.data:
-        return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+        if existing.data:
+            # Unlike
+            supabase.table("likes").delete().eq("user_id", user_id).eq("post_id", post_id).execute()
+            liked = False
+        else:
+            # Like
+            supabase.table("likes").insert({
+                "user_id": user_id,
+                "post_id": post_id,
+            }).execute()
+            liked = True
 
-    # Insert like
-    supabase.table("likes").insert({
-        "user_id": user_id,
-        "post_id": post_id,
-    }).execute()
+        # Count updated likes
+        count_result = (
+            supabase.table("likes")
+            .select("id", count="exact")
+            .eq("post_id", post_id)
+            .execute()
+        )
+        new_count = len(count_result.data or [])
 
-    return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+        return JsonResponse({
+            "status": "success",
+            "liked": liked,
+            "new_count": new_count
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 
@@ -542,4 +563,38 @@ def comment_post_view(request, post_id):
 
     return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
 
+
+
+@csrf_exempt
+def get_post_comments(request, post_id):
+    if request.method == "GET":
+        try:
+            comments = (
+                supabase
+                .table("comments")
+                .select("id, comment, created_at, user_id")  # ✅ remove invalid join
+                .eq("post_id", post_id)
+                .order("created_at", desc=False)
+                .execute()
+            )
+            return JsonResponse(comments.data, safe=False)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    
+@csrf_exempt
+def get_user_info_view(request, user_id):
+    if request.method == "GET":
+        try:
+            user = (
+                supabase
+                .table("accounts")
+                .select("full_name, profile_url")
+                .eq("user_id", user_id)
+                .single()
+                .execute()
+            )
+            return JsonResponse(user.data)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 

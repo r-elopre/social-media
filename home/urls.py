@@ -9,7 +9,8 @@ from .views import send_chat_message_view
 from .views import create_post_view
 from .views import load_user_posts_view
 from .views import like_post_view, comment_post_view
-
+from .views import get_post_comments
+from .views import get_user_info_view
 
 
 
@@ -26,10 +27,8 @@ urlpatterns = [
     path("user-posts/<str:username>/", load_user_posts_view, name="load_user_posts"),
     path("like-post/<int:post_id>/", like_post_view, name="like_post"),
     path("comment-post/<int:post_id>/", comment_post_view, name="comment_post"),
-
-
-
-
+    path("get-post-comments/<int:post_id>/", get_post_comments, name="get_post_comments"),
+    path("get-user-info/<str:user_id>/", get_user_info_view, name="get_user_info"),
 
 ]
 

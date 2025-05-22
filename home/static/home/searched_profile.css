@@ -301,3 +301,47 @@ video.post-media {
   color: #666;
   margin-left: 8px;
 }
+
+
+/* comment preview*/
+
+.post-comments-preview p,
+.post-comments-full p {
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.view-all-comments {
+  font-size: 13px;
+  color: #007bff;
+  text-decoration: none;
+  margin-top: 4px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.view-all-comments:hover {
+  text-decoration: underline;
+}
+
+.comment-time {
+  color: #888;
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+.post-comments-full p {
+  font-size: 14px;
+  line-height: 1.4;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.comment-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
