@@ -603,3 +603,64 @@ def get_user_info_view(request, user_id):
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
+
+
+@csrf_exempt
+def global_posts_view(request):
+    try:
+        offset = int(request.GET.get("offset", 0))
+        limit = 5
+        user_id = request.session.get("user_id")
+
+        posts_response = (
+            supabase
+            .table("posts")
+            .select("*")
+            .order("created_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+
+        posts = posts_response.data or []
+
+        enriched_posts = []
+
+        for post in posts:
+            try:
+                post_id = str(post.get("id", ""))
+                user_info = (
+                    supabase
+                    .table("accounts")
+                    .select("full_name, profile_url")
+                    .eq("user_id", post["user_id"])
+                    .single()
+                    .execute()
+                )
+
+                post["user"] = user_info.data or {}
+
+                # Like count
+                likes = supabase.table("likes").select("id").eq("post_id", post_id).execute()
+                post["like_count"] = len(likes.data or [])
+
+                # Whether current user liked
+                if user_id:
+                    liked = supabase.table("likes").select("id").eq("post_id", post_id).eq("user_id", user_id).execute()
+                    post["liked_by_user"] = bool(liked.data)
+                else:
+                    post["liked_by_user"] = False
+
+                # Comment count
+                comments = supabase.table("comments").select("id").eq("post_id", post_id).execute()
+                post["comment_count"] = len(comments.data or [])
+
+                enriched_posts.append(post)
+
+            except Exception as post_err:
+                print("Post enrichment error:", post_err)
+
+        return JsonResponse(enriched_posts, safe=False)
+
+    except Exception as e:
+        print("Global post fetch failed:", e)
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)

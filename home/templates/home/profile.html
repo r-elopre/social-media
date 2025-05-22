@@ -6,6 +6,8 @@
   {% load static %}
   <title>Profile | ChatGF</title>
   <link rel="stylesheet" href="{% static 'home/profile.css' %}" />
+  <link rel="stylesheet" href="{% static 'home/searched_profile.css' %}">
+
 </head>
 <body>
 
@@ -78,6 +80,16 @@
         <p>{{ user.bio }}</p>
       </div>
     </section>
+
+    <!-- Add another Section for post -->
+     <!-- Global Feed Section -->
+    <section id="global-feed-section" class="user-posts-section">
+      <h3>🌍 Global Feed</h3>
+      <div class="post-grid" id="global-post-grid">
+        <!-- Posts will be dynamically inserted here -->
+      </div>
+    </section>
+
     </div>
 
     

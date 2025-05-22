@@ -312,4 +312,276 @@ function getCookie(name) {
   return cookieValue;
 }
 
+
+
+// 🌍 Global Feed Lazy Loader
+const globalGrid = document.getElementById("global-post-grid");
+if (globalGrid) {
+  let offset = 0;
+  let isLoading = false;
+  let endOfPosts = false;
+
+async function loadGlobalPosts() {
+  if (isLoading || endOfPosts) return;
+  isLoading = true;
+
+  const loader = document.createElement("p");
+  loader.textContent = "Loading posts...";
+  loader.style.textAlign = "center";
+  globalGrid.appendChild(loader);
+
+  try {
+    const response = await fetch(`/global-posts/?offset=${offset}`);
+    const posts = await response.json();
+
+    if (!Array.isArray(posts) || posts.length === 0) {
+      endOfPosts = true;
+      loader.remove();
+      return;
+    }
+
+    posts.forEach(post => {
+      const card = document.createElement("div");
+      card.className = "post-card";
+
+      // Header
+      const header = document.createElement("div");
+      header.className = "post-header";
+      header.innerHTML = `
+        <img src="${post.user.profile_url}" class="post-avatar" alt="Avatar">
+        <div class="post-user-info">
+          <p class="post-author">${post.user.full_name}</p>
+          <p class="post-time">🕒 ${new Date(post.created_at).toLocaleString()}</p>
+        </div>
+      `;
+      card.appendChild(header);
+
+      // Content
+      const content = document.createElement("p");
+      content.className = "post-content";
+      content.textContent = post.content;
+      card.appendChild(content);
+
+      // Media
+      if (post.media_url) {
+        const url = post.media_url.toLowerCase();
+        let media;
+        if (url.includes(".mp4") || url.includes(".webm")) {
+          media = `<video src="${post.media_url}" controls class="post-media"></video>`;
+        } else {
+          media = `<img src="${post.media_url}" class="post-media" alt="Post media">`;
+        }
+        card.insertAdjacentHTML("beforeend", media);
+      }
+
+      // Actions
+      const actions = document.createElement("div");
+      actions.className = "post-actions";
+      actions.innerHTML = `
+        <div class="like-form">
+          <button type="button" class="like-button"
+                  data-post-id="${post.id}"
+                  data-liked="${post.liked_by_user}">
+            ${post.liked_by_user ? "💖 Liked" : "❤️ Like"}
+          </button>
+          <span class="like-count" id="like-count-${post.id}">
+            ${post.like_count} like${post.like_count !== 1 ? "s" : ""}
+          </span>
+        </div>
+        <form class="comment-form" data-post-id="${post.id}">
+          <input type="text" name="comment" placeholder="Add a comment..." required>
+          <button type="submit">💬</button>
+          <span class="comment-count">
+            ${post.comment_count} comment${post.comment_count !== 1 ? "s" : ""}
+          </span>
+        </form>
+      `;
+      card.appendChild(actions);
+
+      // Comment preview + view all
+      const preview = document.createElement("div");
+      preview.className = "post-comments-preview";
+      preview.id = `preview-comments-${post.id}`;
+
+      if (post.comment_count > 0) {
+        const viewAll = document.createElement("a");
+        viewAll.href = "#";
+        viewAll.className = "view-all-comments";
+        viewAll.dataset.postId = post.id;
+        viewAll.textContent = `💬 View all ${post.comment_count} comments`;
+        preview.appendChild(viewAll);
+      }
+
+      card.appendChild(preview);
+
+      // Full comment section (initially hidden)
+      const full = document.createElement("div");
+      full.className = "post-comments-full";
+      full.id = `full-comments-${post.id}`;
+      full.style.display = "none";
+      card.appendChild(full);
+
+      globalGrid.appendChild(card);
+    });
+
+    offset += posts.length;
+    loader.remove();
+    isLoading = false;
+    attachGlobalLikeHandlers();
+    attachGlobalCommentHandlers();
+    attachGlobalViewCommentsHandlers();
+
+  } catch (err) {
+    console.error("Failed to load global posts", err);
+    loader.remove();
+  }
+}
+
+
+  function attachGlobalLikeHandlers() {
+    document.querySelectorAll(".like-button").forEach(button => {
+      button.removeEventListener("click", handleGlobalLikeClick);
+      button.addEventListener("click", handleGlobalLikeClick);
+    });
+  }
+
+
+  function attachGlobalViewCommentsHandlers() {
+  document.querySelectorAll(".view-all-comments").forEach(link => {
+    link.removeEventListener("click", handleViewAllClick);
+    link.addEventListener("click", handleViewAllClick);
+  });
+}
+
+async function getUserInfo(userId) {
+  if (!getUserInfo.cache) getUserInfo.cache = {};
+
+  if (getUserInfo.cache[userId]) {
+    return getUserInfo.cache[userId];
+  }
+
+  const res = await fetch(`/get-user-info/${userId}/`);
+  const data = await res.json();
+  getUserInfo.cache[userId] = data;
+  return data;
+}
+
+
+async function handleViewAllClick(e) {
+  e.preventDefault();
+  const link = e.currentTarget;
+  const postId = link.dataset.postId;
+  const full = document.getElementById(`full-comments-${postId}`);
+
+  if (full.style.display === "block") {
+    full.style.display = "none";
+    link.textContent = `💬 View all comments`;
+    return;
+  }
+
+  full.innerHTML = "<p>⏳ Loading comments...</p>";
+  full.style.display = "block";
+
+  try {
+    const res = await fetch(`/get-post-comments/${postId}/`);
+    const comments = await res.json();
+
+    const elements = await Promise.all(comments.map(async comment => {
+      const user = await getUserInfo(comment.user_id);
+      return `
+        <p>
+          <img src="${user.profile_url}" alt="Avatar" class="comment-avatar">
+          <strong>${user.full_name}</strong> ${comment.comment}
+          <span class="comment-time">${new Date(comment.created_at).toLocaleString()}</span>
+        </p>
+      `;
+    }));
+
+    full.innerHTML = elements.join("");
+    link.textContent = `⬆️ Hide comments`;
+  } catch (err) {
+    console.error("Failed to load comments", err);
+    full.innerHTML = "<p style='color:red;'>❌ Failed to load comments.</p>";
+  }
+}
+
+
+  async function handleGlobalLikeClick(event) {
+    const button = event.currentTarget;
+    const postId = button.getAttribute("data-post-id");
+
+    try {
+      const response = await fetch(`/like-post/${postId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken")
+        }
+      });
+
+      const data = await response.json();
+      if (data.status === "success") {
+        button.setAttribute("data-liked", data.liked.toString());
+        button.innerHTML = data.liked ? "💖 Liked" : "❤️ Like";
+        const countSpan = document.getElementById(`like-count-${postId}`);
+        countSpan.textContent = `${data.new_count} like${data.new_count !== 1 ? "s" : ""}`;
+      }
+    } catch (err) {
+      console.error("Like failed", err);
+    }
+  }
+
+  function attachGlobalCommentHandlers() {
+    document.querySelectorAll(".comment-form").forEach(form => {
+      form.removeEventListener("submit", handleGlobalCommentSubmit);
+      form.addEventListener("submit", handleGlobalCommentSubmit);
+    });
+  }
+
+  async function handleGlobalCommentSubmit(e) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const postId = form.dataset.postId;
+    const input = form.querySelector("input[name='comment']");
+    const commentText = input.value.trim();
+    const countSpan = form.querySelector(".comment-count");
+
+    if (!commentText) return;
+
+    try {
+      const response = await fetch(`/comment-post/${postId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({ comment: commentText })
+      });
+
+      const result = await response.json();
+      if (result.status === "success") {
+        input.value = "";
+        const currentCount = parseInt(countSpan.textContent) || 0;
+        const newCount = currentCount + 1;
+        countSpan.textContent = `${newCount} comment${newCount !== 1 ? "s" : ""}`;
+      } else {
+        console.error("Comment failed:", result.message);
+      }
+    } catch (err) {
+      console.error("Comment error", err);
+    }
+  }
+
+  // Auto load first batch
+  loadGlobalPosts();
+
+  // Infinite scroll
+  window.addEventListener("scroll", () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+      loadGlobalPosts();
+    }
+  });
+}
+
+
+
 });
