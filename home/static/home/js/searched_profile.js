@@ -213,6 +213,43 @@ document.querySelectorAll(".view-all-comments").forEach(link => {
 });
 
 
+document.querySelectorAll(".comment-form").forEach(form => {
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const postId = this.dataset.postId;
+    const input = this.querySelector("input[name='comment']");
+    const commentText = input.value.trim();
+    const countSpan = this.querySelector(".comment-count");
+
+    if (!commentText) return;
+
+    try {
+      const response = await fetch(`/comment-post/${postId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({ comment: commentText })
+      });
+
+      const result = await response.json();
+      if (result.status === "success") {
+        input.value = "";
+
+        const currentCount = parseInt(countSpan.textContent) || 0;
+        const newCount = currentCount + 1;
+        countSpan.textContent = `${newCount} comment${newCount !== 1 ? "s" : ""}`;
+      } else {
+        console.error("Error:", result.message);
+      }
+    } catch (err) {
+      console.error("Comment submit error", err);
+    }
+  });
+});
+
 
 
 

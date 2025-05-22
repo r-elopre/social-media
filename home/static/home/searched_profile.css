@@ -195,18 +195,21 @@ body {
 /* Image and video media */
 .post-media {
   width: 100%;
-  max-height: 360px;
+  max-height: 480px; /* increased from 360px */
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 12px;
 }
+
 
 /* Timestamp */
 .post-time {
   font-size: 13px;
   color: #888;
-  text-align: right;
   font-style: italic;
+  margin: 0;
+  text-align: right;
 }
+
 
 /* When no posts are available */
 .no-posts {
@@ -218,11 +221,12 @@ body {
 
 video.post-media {
   width: 100%;
-  max-height: 400px;
-  border-radius: 10px;
+  max-height: 500px; /* slightly larger for video */
+  border-radius: 12px;
   object-fit: contain;
   background-color: #000;
 }
+
 
 .post-header {
   display: flex;
@@ -251,24 +255,29 @@ video.post-media {
   margin: 0;
 }
 
-.post-time {
-  font-size: 13px;
-  color: #888;
-  margin: 0;
-}
 
+/* ───────────────────────────── */
+/* Post Actions: Like & Comment */
+/* ───────────────────────────── */
 
 .post-actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 12px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
 }
 
-.post-actions form {
+/* Like form */
+.post-actions .like-form {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
 }
 
 .like-button {
@@ -277,33 +286,56 @@ video.post-media {
   font-size: 16px;
   color: #e74c3c;
   cursor: pointer;
+  padding: 4px 6px;
+}
+
+.like-count {
+  font-size: 13px;
+  color: #666;
+  margin-left: 4px;
+}
+
+/* Comment form */
+.post-actions .comment-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 2 1 100%;
 }
 
 .comment-form input[type="text"] {
   flex: 1;
   padding: 6px 10px;
+  font-size: 14px;
   border-radius: 6px;
   border: 1px solid #ccc;
+  background-color: #fefefe;
 }
 
 .comment-form button {
   padding: 6px 12px;
+  font-size: 14px;
   border: none;
   background-color: #3498db;
   color: white;
   border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-.like-count,
+.comment-form button:hover {
+  background-color: #2980b9;
+}
+
 .comment-count {
   font-size: 13px;
   color: #666;
-  margin-left: 8px;
+  margin-left: 4px;
 }
 
-
-/* comment preview*/
+/* ───────────────────────────── */
+/* Comments Section: Preview + Full */
+/* ───────────────────────────── */
 
 .post-comments-preview p,
 .post-comments-full p {
@@ -344,4 +376,33 @@ video.post-media {
   border-radius: 50%;
   margin-right: 6px;
   vertical-align: middle;
+}
+
+/* ───────────────────────────── */
+/* Responsive Design Fixes       */
+/* ───────────────────────────── */
+
+@media (max-width: 576px) {
+  .post-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .post-actions .comment-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .comment-form input[type="text"] {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .comment-form button {
+    width: 100%;
+  }
+
+  .post-actions .like-form {
+    justify-content: flex-start;
+  }
 }

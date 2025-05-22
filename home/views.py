@@ -13,7 +13,7 @@ import uuid
 from dateutil import parser
 from django.shortcuts import redirect
 from zoneinfo import ZoneInfo
-
+import json
 
 def homepage_view(request):
     user_id = request.session.get("user_id")
@@ -548,20 +548,25 @@ def like_post_view(request, post_id):
 def comment_post_view(request, post_id):
     user_id = request.session.get("user_id")
     if request.method != "POST" or not user_id:
-        return redirect("signin")
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
 
-    comment_text = request.POST.get("comment", "").strip()
-    if not comment_text:
-        return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+    try:
+        data = json.loads(request.body)
+        comment_text = data.get("comment", "").strip()
 
-    # Insert comment
-    supabase.table("comments").insert({
-        "user_id": user_id,
-        "post_id": post_id,
-        "comment": comment_text,
-    }).execute()
+        if not comment_text:
+            return JsonResponse({"status": "error", "message": "Empty comment"}, status=400)
 
-    return redirect(request.META.get("HTTP_REFERER", "/"), status=303)
+        # Insert the comment
+        supabase.table("comments").insert({
+            "user_id": user_id,
+            "post_id": post_id,
+            "comment": comment_text,
+        }).execute()
+
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 

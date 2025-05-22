@@ -32,16 +32,17 @@
   <!-- User Posts Section -->
 <section class="user-posts-section">
   <h3>{{ user.full_name }}'s Posts</h3>
-  {% if error %}
-  <p style="color: red;">{{ error }}</p>
-{% endif %}
 
+  {% if error %}
+    <p style="color: red;">{{ error }}</p>
+  {% endif %}
 
   {% if posts %}
     <div class="post-grid">
       {% for post in posts %}
         <div class="post-card">
-          <!-- Post header: user info -->
+          
+          <!-- ───── Post Header ───── -->
           <div class="post-header">
             <img src="{{ user.profile_url }}" alt="Profile" class="post-avatar">
             <div class="post-user-info">
@@ -50,10 +51,10 @@
             </div>
           </div>
 
-          <!-- Post content -->
+          <!-- ───── Post Content ───── -->
           <p class="post-content">{{ post.content }}</p>
 
-          <!-- Media (image or video) -->
+          <!-- ───── Media (Image or Video) ───── -->
           {% if post.media_url %}
             {% with post.media_url|lower as url %}
               {% if ".mp4" in url or ".webm" in url %}
@@ -66,54 +67,52 @@
             {% endwith %}
           {% endif %}
 
-          <!-- Post actions: Like and Comment -->
-<div class="post-actions">
-  <!-- LIKE: now in a div for row layout, no form -->
-  <div class="like-form">
-    <button type="button" class="like-button"
-            data-post-id="{{ post.id }}"
-            data-liked="{{ post.liked_by_user|yesno:'true,false' }}">
-      {% if post.liked_by_user %}
-        💖 Liked
-      {% else %}
-        ❤️ Like
-      {% endif %}
-    </button>
-    <span class="like-count" id="like-count-{{ post.id }}">
-      {{ post.like_count }} like{{ post.like_count|pluralize }}
-    </span>
-  </div>
+          <!-- ───── Like + Comment Actions ───── -->
+          <div class="post-actions">
+            <!-- Like button -->
+            <div class="like-form">
+              <button type="button" class="like-button"
+                      data-post-id="{{ post.id }}"
+                      data-liked="{{ post.liked_by_user|yesno:'true,false' }}">
+                {% if post.liked_by_user %}
+                  💖 Liked
+                {% else %}
+                  ❤️ Like
+                {% endif %}
+              </button>
+              <span class="like-count" id="like-count-{{ post.id }}">
+                {{ post.like_count }} like{{ post.like_count|pluralize }}
+              </span>
+            </div>
 
-  <!-- COMMENT: unchanged -->
-  <form method="POST" action="/comment-post/{{ post.id }}/" class="comment-form">
-    {% csrf_token %}
-    <input type="text" name="comment" placeholder="Add a comment..." required>
-    <button type="submit">💬</button>
-    <span class="comment-count">
-      {{ post.comment_count }} comment{{ post.comment_count|pluralize }}
-    </span>
-  </form>
-</div>
+            <!-- Comment form -->
+            <form class="comment-form" data-post-id="{{ post.id }}">
+              {% csrf_token %}
+              <input type="text" name="comment" placeholder="Add a comment..." required>
+              <button type="submit">💬</button>
+              <span class="comment-count">
+                {{ post.comment_count }} comment{{ post.comment_count|pluralize }}
+              </span>
+            </form>
+          </div>
 
-<!-- Previewed under the post -->
-<div class="post-comments-preview" id="preview-comments-{{ post.id }}">
-  {% for comment in post.comments|slice:":2" %}
-    <p><strong>{{ comment.user.full_name }}</strong> {{ comment.text }}</p>
-  {% endfor %}
+          <!-- ───── Comments Preview ───── -->
+          <div class="post-comments-preview" id="preview-comments-{{ post.id }}">
+            {% for comment in post.comments|slice:":2" %}
+              <p><strong>{{ comment.user.full_name }}</strong> {{ comment.text }}</p>
+            {% endfor %}
 
-  {% if post.comment_count > 0 %}
-    <a href="#" class="view-all-comments" data-post-id="{{ post.id }}">
-      💬 View all {{ post.comment_count }} comments
-    </a>
-  {% endif %}
-</div>
+            {% if post.comment_count > 0 %}
+              <a href="#" class="view-all-comments" data-post-id="{{ post.id }}">
+                💬 View all {{ post.comment_count }} comments
+              </a>
+            {% endif %}
+          </div>
 
-<!-- Hidden full comment container -->
-<div class="post-comments-full" id="full-comments-{{ post.id }}" style="display: none;"></div>
+          <!-- ───── Full Comments Section (Hidden Initially) ───── -->
+          <div class="post-comments-full" id="full-comments-{{ post.id }}" style="display: none;"></div>
 
-
-
-        </div>
+        </div> <!-- ✅ Close post-card -->
       {% endfor %}
     </div>
   {% else %}
