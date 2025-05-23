@@ -461,8 +461,9 @@ def load_user_posts_view(request, username):
     try:
         offset = int(request.GET.get("offset", 0))
         limit = 5
+        viewer_id = request.session.get("user_id")
 
-        # Find the user by username
+        # Find user by username
         user_response = (
             supabase
             .table("accounts")
@@ -476,7 +477,7 @@ def load_user_posts_view(request, username):
 
         user_id = user_response.data["user_id"]
 
-        # Fetch more posts
+        # Fetch posts
         posts_response = (
             supabase
             .table("posts")
@@ -487,11 +488,38 @@ def load_user_posts_view(request, username):
             .execute()
         )
 
-        return JsonResponse(posts_response.data, safe=False)
+        enriched = []
+        for post in posts_response.data:
+            post_id = str(post.get("id", ""))
+            post["like_count"] = 0
+            post["comment_count"] = 0
+            post["liked_by_user"] = False
+
+            try:
+                likes = supabase.table("likes").select("id").eq("post_id", post_id).execute()
+                post["like_count"] = len(likes.data or [])
+            except:
+                pass
+
+            try:
+                comments = supabase.table("comments").select("id").eq("post_id", post_id).execute()
+                post["comment_count"] = len(comments.data or [])
+            except:
+                pass
+
+            if viewer_id:
+                try:
+                    liked = supabase.table("likes").select("id").eq("post_id", post_id).eq("user_id", viewer_id).execute()
+                    post["liked_by_user"] = bool(liked.data)
+                except:
+                    pass
+
+            enriched.append(post)
+
+        return JsonResponse(enriched, safe=False)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-    
 
 
 @csrf_exempt
