@@ -24,7 +24,8 @@
   <section class="message-section">
     <h3>Send a Message</h3>
     <form method="POST" action="#">
-      <textarea name="message" placeholder="Type your message here..." required></textarea>
+      <textarea name="message" placeholder="Type your message here..." maxlength="300" required></textarea>
+
       <button type="submit">Send</button>
     </form>
   </section>
@@ -88,7 +89,7 @@
             <!-- Comment form -->
             <form class="comment-form" data-post-id="{{ post.id }}">
               {% csrf_token %}
-              <input type="text" name="comment" placeholder="Add a comment..." required>
+             <input type="text" name="comment" placeholder="Add a comment..." maxlength="300" required>
               <button type="submit">💬</button>
               <span class="comment-count">
                 {{ post.comment_count }} comment{{ post.comment_count|pluralize }}
