@@ -12,13 +12,26 @@
 
 <main class="main-container">
   <!-- Profile Section -->
-  <section class="profile-section">
-   <img src="{{ user.profile_url }}" alt="Profile Picture" class="profile-pic">
-    <div class="profile-info">
-      <h2>{{ user.full_name }}</h2>
-      <p>{{ user.bio }}</p>
-    </div>
-  </section>
+<section class="profile-section">
+  <img src="{{ user.profile_url }}" alt="Profile Picture" class="profile-pic">
+  
+  <div class="profile-info">
+    <h2>{{ user.full_name }}</h2>
+    <p>{{ user.bio }}</p>
+  </div>
+
+  <!-- Follow Button (no form) -->
+<button type="button"
+        class="follow-button {% if is_following %}following{% endif %}"
+        id="follow-btn"
+        data-username="{{ user.username }}">
+  {% if is_following %}Following{% else %}Follow{% endif %}
+</button>
+
+
+
+</section>
+
 
   <!-- Send Message Section -->
   <section class="message-section">

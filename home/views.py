@@ -387,6 +387,18 @@ def searched_profile_view(request, username):
 
             return redirect("searched_profile", username=username)
 
+        # ✅ Check if current user is following the receiver
+        is_following = False
+        if user_id and receiver_data.get("user_id"):
+            try:
+                follow_check = supabase.table("follows").select("id")\
+                    .eq("follower_id", user_id)\
+                    .eq("following_id", receiver_data["user_id"])\
+                    .execute()
+                is_following = bool(follow_check.data)
+            except Exception as follow_error:
+                print("Follow status check failed:", follow_error)
+
         # Fetch latest 5 posts for that user
         posts_response = (
             supabase
@@ -446,7 +458,8 @@ def searched_profile_view(request, username):
 
         return render(request, "home/searched_profile.html", {
             "user": receiver_data,
-            "posts": posts
+            "posts": posts,
+            "is_following": is_following  # ✅ Pass this to template
         })
 
     except Exception as e:
@@ -692,3 +705,60 @@ def global_posts_view(request):
     except Exception as e:
         print("Global post fetch failed:", e)
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+
+@csrf_exempt
+def toggle_follow_view(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Only POST requests are allowed."}, status=405)
+
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"status": "error", "message": "Authentication required."}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        target_username = data.get("username")
+    except Exception:
+        return JsonResponse({"status": "error", "message": "Invalid JSON body."}, status=400)
+
+    if not target_username:
+        return JsonResponse({"status": "error", "message": "Missing target username."}, status=400)
+
+    try:
+        # Fetch target user's ID
+        target = supabase.table("accounts").select("user_id")\
+            .eq("username", target_username).single().execute()
+
+        if not target.data:
+            return JsonResponse({"status": "error", "message": "Target user not found."}, status=404)
+
+        target_id = target.data["user_id"]
+
+        if user_id == target_id:
+            return JsonResponse({"status": "error", "message": "You cannot follow yourself."}, status=400)
+
+        # Toggle follow state
+        follow_check = supabase.table("follows").select("id")\
+            .eq("follower_id", user_id)\
+            .eq("following_id", target_id)\
+            .execute()
+
+        if follow_check.data:
+            # Unfollow
+            supabase.table("follows").delete()\
+                .eq("follower_id", user_id)\
+                .eq("following_id", target_id)\
+                .execute()
+            return JsonResponse({"status": "unfollowed", "target": target_username})
+        else:
+            # Follow
+            supabase.table("follows").insert({
+                "follower_id": user_id,
+                "following_id": target_id
+            }).execute()
+            return JsonResponse({"status": "followed", "target": target_username})
+
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": "Internal server error."}, status=500)

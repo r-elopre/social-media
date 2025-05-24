@@ -262,4 +262,37 @@ async function handleViewClick(e) {
   attachLikeHandlers();
   attachViewCommentHandlers();
   attachCommentFormHandlers();
+
+
+const followBtn = document.getElementById("follow-btn");
+if (followBtn) {
+  followBtn.addEventListener("click", async () => {
+    const username = followBtn.dataset.username;
+
+    try {
+      const res = await fetch("/toggle-follow/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ username }),
+      });
+
+      const data = await res.json();
+      if (data.status === "followed") {
+        followBtn.textContent = "Following";
+        followBtn.classList.add("following");
+      } else if (data.status === "unfollowed") {
+        followBtn.textContent = "Follow";
+        followBtn.classList.remove("following");
+      }
+    } catch (err) {
+      console.error("Follow toggle failed", err);
+    }
+  });
+}
+
+
+
 });

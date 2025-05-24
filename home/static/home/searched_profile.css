@@ -440,3 +440,37 @@ video.post-media {
     padding: 0 !important;
   }
 }
+
+/* ───────────────────────────── */
+/* Follow Button - Industry Standard Blue */
+/* ───────────────────────────── */
+
+.follow-button {
+  margin-left: auto;
+  height: fit-content;
+  align-self: center;
+  background-color: #1da1f2; /* Twitter Blue */
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.25s ease, transform 0.15s ease;
+  box-shadow: 0 4px 8px rgba(29, 161, 242, 0.2);
+}
+
+.follow-button:hover {
+  background-color: #0d8ddb;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .follow-button {
+    margin-top: 12px;
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+}
