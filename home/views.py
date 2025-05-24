@@ -762,3 +762,47 @@ def toggle_follow_view(request):
 
     except Exception as e:
         return JsonResponse({"status": "error", "message": "Internal server error."}, status=500)
+
+
+@csrf_exempt
+def get_followed_posts_view(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+
+    try:
+        # Step 1: Get list of user_ids the current user follows
+        follows = supabase.table("follows").select("following_id")\
+            .eq("follower_id", user_id).execute()
+        following_ids = [f["following_id"] for f in follows.data]
+
+        if not following_ids:
+            return JsonResponse([], safe=False)
+
+        # Step 2: Fetch latest posts from those users
+        posts = supabase.table("posts").select("*").in_("user_id", following_ids)\
+            .order("created_at", desc=True).limit(10).execute()
+
+        enriched = []
+
+        for post in posts.data:
+            # Step 3: Fetch author profile info (including username)
+            user_res = supabase.table("accounts").select("full_name", "profile_url", "username")\
+                .eq("user_id", post["user_id"]).single().execute()
+
+            if not user_res.data:
+                continue
+
+            enriched.append({
+                "author_name": user_res.data["full_name"],
+                "author_avatar": user_res.data["profile_url"],
+                "username": user_res.data["username"],
+                "content": post.get("content", "")[:120],
+                "timestamp": post["created_at"]
+            })
+
+        return JsonResponse(enriched, safe=False)
+
+    except Exception as e:
+        print("Error in get_followed_posts_view:", e)
+        return JsonResponse({"status": "error", "message": "Internal error"}, status=500)

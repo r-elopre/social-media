@@ -13,8 +13,7 @@ from .views import get_post_comments
 from .views import get_user_info_view
 from .views import global_posts_view 
 from .views import toggle_follow_view
-
-
+from .views import get_followed_posts_view
 
 urlpatterns = [
     path('', signin_view, name='signin'),
@@ -33,6 +32,8 @@ urlpatterns = [
     path("get-user-info/<str:user_id>/", get_user_info_view, name="get_user_info"),
     path("global-posts/", global_posts_view, name="global_posts"),
     path("toggle-follow/", toggle_follow_view, name="toggle_follow"),
+    path("followed-posts/", get_followed_posts_view, name="followed_posts"),
+
 
 ]
 

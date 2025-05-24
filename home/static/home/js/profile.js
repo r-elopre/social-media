@@ -403,14 +403,12 @@ async function loadGlobalPosts() {
       preview.className = "post-comments-preview";
       preview.id = `preview-comments-${post.id}`;
 
-      if (post.comment_count > 0) {
-        const viewAll = document.createElement("a");
-        viewAll.href = "#";
-        viewAll.className = "view-all-comments";
-        viewAll.dataset.postId = post.id;
-        viewAll.textContent = `💬 View all ${post.comment_count} comments`;
-        preview.appendChild(viewAll);
-      }
+     const viewAll = document.createElement("a");
+    viewAll.href = "#";
+    viewAll.className = "view-all-comments";
+    viewAll.dataset.postId = post.id;
+    viewAll.textContent = `💬 View all ${post.comment_count} comment${post.comment_count !== 1 ? "s" : ""}`;
+    preview.appendChild(viewAll);
 
       card.appendChild(preview);
 
@@ -580,6 +578,77 @@ async function handleViewAllClick(e) {
       loadGlobalPosts();
     }
   });
+}
+
+
+// ✅ notifications
+
+const communitySection = document.getElementById("community-section");
+let communityLoaded = false; // ✅ Only load once per page
+
+function loadFollowedPosts() {
+  const list = communitySection.querySelector("ul");
+  list.innerHTML = "<li>⏳ Loading recent posts from your network...</li>";
+
+  fetch("/followed-posts/")
+    .then(res => res.json())
+    .then(data => {
+      list.innerHTML = "";
+
+      if (!data.length) {
+        list.innerHTML = "<li>No recent activity from people you follow.</li>";
+        return;
+      }
+
+      data.forEach(post => {
+        const li = document.createElement("li");
+        const timeAgo = timeSince(new Date(post.timestamp));
+        li.innerHTML = `
+          <img src="${post.author_avatar}" alt="${post.author_name}" class="community-avatar" />
+          <span>
+            <strong>
+              <a href="/user-profile/${post.username}/" style="color: #0984e3; text-decoration: none;">
+                ${post.author_name}
+              </a>
+            </strong> posted: “${post.content}”
+            <br><small style="color: #888;">${timeAgo}</small>
+          </span>
+        `;
+        list.appendChild(li);
+      });
+    })
+    .catch(() => {
+      list.innerHTML = "<li>❌ Failed to load community posts.</li>";
+    });
+}
+
+// ✅ Load only once when Community tab is first clicked
+document.querySelector('[data-target="community-section"]')?.addEventListener("click", () => {
+  if (!communityLoaded) {
+    loadFollowedPosts();
+    communityLoaded = true;
+  }
+});
+
+// 🕒 Friendly "X ago" time function
+function timeSince(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  const intervals = [
+    { label: "year", seconds: 31536000 },
+    { label: "month", seconds: 2592000 },
+    { label: "day", seconds: 86400 },
+    { label: "hour", seconds: 3600 },
+    { label: "minute", seconds: 60 },
+    { label: "second", seconds: 1 }
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(seconds / interval.seconds);
+    if (count > 0) {
+      return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`;
+    }
+  }
+  return "just now";
 }
 
 
