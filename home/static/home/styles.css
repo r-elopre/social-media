@@ -87,3 +87,7 @@ body {
 .helper-text a:hover {
   text-decoration: underline;
 }
+
+input, button {
+  box-sizing: border-box;
+}

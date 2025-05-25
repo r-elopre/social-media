@@ -209,11 +209,16 @@ const mediaPreview = document.getElementById("media-preview");
 postForm?.addEventListener("submit", function (e) {
   e.preventDefault();
 
-  const content = postContent.value.trim();
-  const mediaFile = postMedia.files[0];
+    const postButton = postForm.querySelector('button[type="submit"]');
+    postButton.disabled = true;
+    postButton.textContent = "Posting...";
 
-  postStatus.textContent = "";
-  postStatus.style.color = "";
+
+    const content = postContent.value.trim();
+    const mediaFile = postMedia.files[0];
+
+    postStatus.textContent = "";
+    postStatus.style.color = "";
 
   if (!content) {
     postStatus.textContent = "❌ Please enter some text.";

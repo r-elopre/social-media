@@ -93,3 +93,9 @@ body {
 .helper-text a:hover {
   text-decoration: underline;
 }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
