@@ -1,6 +1,20 @@
 // searched_profile.js
 
 document.addEventListener("DOMContentLoaded", function () {
+
+function escapeHTML(str) {
+  return str.replace(/[&<>"']/g, tag => (
+    {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[tag] || tag
+  ));
+}
+
+
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
@@ -83,13 +97,14 @@ async function handleViewClick(e) {
     const comments = await response.json();
     const commentElements = await Promise.all(comments.map(async comment => {
       const user = await getUserInfo(comment.user_id);
-      return `
-        <p>
-          <img src="${user.profile_url}" alt="Avatar" class="comment-avatar">
-          <strong>${user.full_name}</strong> ${comment.comment}
-          <span class="comment-time">${new Date(comment.created_at).toLocaleString()}</span>
-        </p>
-      `;
+return `
+  <p>
+    <img src="${user.profile_url}" alt="Avatar" class="comment-avatar">
+    <strong>${escapeHTML(user.full_name)}</strong> ${escapeHTML(comment.comment)}
+    <span class="comment-time">${new Date(comment.created_at).toLocaleString()}</span>
+  </p>
+`;
+
     }));
     full.innerHTML = commentElements.join("");
     link.textContent = `⬆️ Hide comments`;
@@ -172,7 +187,7 @@ async function handleViewClick(e) {
             header.innerHTML = `
               <img src="${userAvatar}" class="post-avatar" alt="Avatar">
               <div class="post-user-info">
-                <p class="post-author">${userFullName}</p>
+                <p class="post-author">${escapeHTML(userFullName)}</p>
                 <p class="post-time">🕒 ${new Date(post.created_at).toLocaleString()}</p>
               </div>`;
             card.appendChild(header);

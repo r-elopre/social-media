@@ -1,4 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
+
+
+function escapeHTML(str) {
+  return str.replace(/[&<>"']/g, tag => (
+    {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[tag] || tag
+  ));
+}
+
+
   // 🔍 Search functionality
   const searchInput = document.querySelector(".search-bar");
   const resultsContainer = document.getElementById("search-results");
@@ -27,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
             div.className = "user-result";
             div.innerHTML = `
               <img src="${user.profile_url}" alt="Profile" width="30" height="30" style="border-radius: 50%;">
-              <strong>${user.full_name}</strong>
+              <strong>${escapeHTML(user.full_name)}</strong>
             `;
             div.style.cursor = "pointer";
             div.addEventListener("click", () => {
@@ -135,7 +150,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (!renderedMessageIds.has(msg.id)) {
             const div = document.createElement("div");
             div.className = `chat-message ${msg.is_you ? "you" : "them"}`;
-            div.innerHTML = `${msg.message}<div class="chat-time">${msg.time}</div>`;
+            div.innerHTML = `${escapeHTML(msg.message)}<div class="chat-time">${escapeHTML(msg.time)}</div>`;
             fragment.appendChild(div);
             renderedMessageIds.add(msg.id);
           }
@@ -491,13 +506,14 @@ async function handleViewAllClick(e) {
 
     const elements = await Promise.all(comments.map(async comment => {
       const user = await getUserInfo(comment.user_id);
-      return `
-        <p>
-          <img src="${user.profile_url}" alt="Avatar" class="comment-avatar">
-          <strong>${user.full_name}</strong> ${comment.comment}
-          <span class="comment-time">${new Date(comment.created_at).toLocaleString()}</span>
-        </p>
-      `;
+return `
+  <p>
+    <img src="${user.profile_url}" alt="Avatar" class="comment-avatar">
+    <strong>${escapeHTML(user.full_name)}</strong> ${escapeHTML(comment.comment)}
+    <span class="comment-time">${new Date(comment.created_at).toLocaleString()}</span>
+  </p>
+`;
+
     }));
 
     full.innerHTML = elements.join("");
@@ -608,17 +624,18 @@ function loadFollowedPosts() {
       data.forEach(post => {
         const li = document.createElement("li");
         const timeAgo = timeSince(new Date(post.timestamp));
-        li.innerHTML = `
-          <img src="${post.author_avatar}" alt="${post.author_name}" class="community-avatar" />
-          <span>
-            <strong>
-              <a href="/user-profile/${post.username}/" style="color: #0984e3; text-decoration: none;">
-                ${post.author_name}
-              </a>
-            </strong> posted: “${post.content}”
-            <br><small style="color: #888;">${timeAgo}</small>
-          </span>
-        `;
+       li.innerHTML = `
+  <img src="${post.author_avatar}" alt="${escapeHTML(post.author_name)}" class="community-avatar" />
+  <span>
+    <strong>
+      <a href="/user-profile/${post.username}/" style="color: #0984e3; text-decoration: none;">
+        ${escapeHTML(post.author_name)}
+      </a>
+    </strong> posted: “${escapeHTML(post.content)}”
+    <br><small style="color: #888;">${timeAgo}</small>
+  </span>
+`;
+
         list.appendChild(li);
       });
     })
