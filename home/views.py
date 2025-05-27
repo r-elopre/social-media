@@ -196,7 +196,7 @@ def signin_view(request):
     return render(request, "home/index.html")
 
 
-@csrf_exempt
+
 def search_users_view(request):
     query = request.GET.get("q", "").replace(" ", "").lower()
 
@@ -216,7 +216,7 @@ def search_users_view(request):
     
 
 
-@csrf_exempt
+
 def fetch_chat_messages_view(request):
     user_id = request.session.get("user_id")
     receiver_id = request.GET.get("receiver_id")
@@ -268,7 +268,7 @@ def fetch_chat_messages_view(request):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
-@csrf_exempt
+
 def send_chat_message_view(request):
     if request.method != "POST":
         return JsonResponse({"status": "error", "message": "Only POST allowed."}, status=405)
@@ -298,7 +298,7 @@ def send_chat_message_view(request):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
-@csrf_exempt
+
 def create_post_view(request):
     if request.method != "POST":
         return JsonResponse({"status": "error", "message": "Only POST method allowed."}, status=405)
@@ -351,7 +351,7 @@ def create_post_view(request):
     
 
 
-@csrf_exempt
+
 def searched_profile_view(request, username):
     try:
         # Fetch receiver account by username
@@ -469,7 +469,7 @@ def searched_profile_view(request, username):
         })
 
 
-@csrf_exempt
+
 def load_user_posts_view(request, username):
     try:
         offset = int(request.GET.get("offset", 0))
@@ -535,7 +535,7 @@ def load_user_posts_view(request, username):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
+
 def like_post_view(request, post_id):
     if request.method != "POST" or not request.session.get("user_id"):
         return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
@@ -585,7 +585,6 @@ def like_post_view(request, post_id):
 
 
 
-@csrf_exempt
 def comment_post_view(request, post_id):
     user_id = request.session.get("user_id")
     if request.method != "POST" or not user_id:
@@ -611,7 +610,7 @@ def comment_post_view(request, post_id):
 
 
 
-@csrf_exempt
+
 def get_post_comments(request, post_id):
     if request.method == "GET":
         try:
@@ -628,7 +627,7 @@ def get_post_comments(request, post_id):
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
     
-@csrf_exempt
+
 def get_user_info_view(request, user_id):
     if request.method == "GET":
         try:
@@ -646,7 +645,7 @@ def get_user_info_view(request, user_id):
 
 
 
-@csrf_exempt
+
 def global_posts_view(request):
     try:
         offset = int(request.GET.get("offset", 0))
@@ -708,7 +707,7 @@ def global_posts_view(request):
 
 
 
-@csrf_exempt
+
 def toggle_follow_view(request):
     if request.method != "POST":
         return JsonResponse({"status": "error", "message": "Only POST requests are allowed."}, status=405)
@@ -764,7 +763,7 @@ def toggle_follow_view(request):
         return JsonResponse({"status": "error", "message": "Internal server error."}, status=500)
 
 
-@csrf_exempt
+
 def get_followed_posts_view(request):
     user_id = request.session.get("user_id")
     if not user_id:

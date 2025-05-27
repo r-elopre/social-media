@@ -37,8 +37,8 @@
   <section class="message-section">
     <h3>Send a Message</h3>
     <form method="POST" action="#">
+      {% csrf_token %}
       <textarea name="message" placeholder="Type your message here..." maxlength="300" required></textarea>
-
       <button type="submit">Send</button>
     </form>
   </section>
