@@ -14,6 +14,8 @@ from dateutil import parser
 from django.shortcuts import redirect
 from zoneinfo import ZoneInfo
 import json
+from django.contrib.auth.hashers import make_password, check_password
+
 
 def homepage_view(request):
     user_id = request.session.get("user_id")
@@ -122,7 +124,6 @@ def signup_view(request):
                 "error": f"Sign up failed: {str(e)}"
             })
 
-
         profile_url = ""
 
         # ✅ 2. Upload image to Supabase Storage (safe)
@@ -146,14 +147,16 @@ def signup_view(request):
                     "error": f"Image upload failed: {upload_error}"
                 })
 
-        # ✅ 3. Insert user into `accounts` table
+        # ✅ 3. Insert user into `accounts` table with hashed password
         try:
+            hashed_pw = make_password(password)  # ✅ HASHING HERE
+
             supabase.table("accounts").insert({
                 "user_id": user_id,
                 "full_name": full_name,
                 "username": username,
                 "bio": bio,
-                "password": password,  # ⚠️ still plain text
+                "password": hashed_pw,  # ✅ STORE HASHED PASSWORD
                 "profile_url": profile_url
             }).execute()
         except Exception as insert_error:
@@ -173,19 +176,20 @@ def signin_view(request):
         password = request.POST.get("password")
 
         try:
+            # Fetch user by username only (do not check password yet)
             response = (
                 supabase
                 .table("accounts")
                 .select("*")
                 .eq("username", username)
-                .eq("password", password)  # ⚠️ Plain text comparison
                 .single()
                 .execute()
             )
 
-            if response.data:
-                request.session["user_id"] = response.data["user_id"]
-                return redirect("home")  # ✅ Redirect to avoid form resubmission
+            user_data = response.data
+            if user_data and check_password(password, user_data["password"]):
+                request.session["user_id"] = user_data["user_id"]
+                return redirect("home")
             else:
                 return render(request, "home/index.html", {"error": "❌ Invalid credentials."})
 
@@ -194,7 +198,6 @@ def signin_view(request):
             return render(request, "home/index.html", {"error": "⚠️ Something went wrong. Try again."})
 
     return render(request, "home/index.html")
-
 
 
 def search_users_view(request):
