@@ -143,3 +143,17 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'home/static'),
 ]
 
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+
+
+SESSION_COOKIE_AGE = 1200  # 20 minutes
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "rate-limit-cache",
+    }
+}
+

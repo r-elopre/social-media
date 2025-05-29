@@ -15,6 +15,9 @@ from django.shortcuts import redirect
 from zoneinfo import ZoneInfo
 import json
 from django.contrib.auth.hashers import make_password, check_password
+from django.core.cache import cache
+from django.utils.timezone import now
+import time
 
 
 def homepage_view(request):
@@ -149,14 +152,14 @@ def signup_view(request):
 
         # ✅ 3. Insert user into `accounts` table with hashed password
         try:
-            hashed_pw = make_password(password)  # ✅ HASHING HERE
+            hashed_pw = make_password(password)  #  HASHING HERE
 
             supabase.table("accounts").insert({
                 "user_id": user_id,
                 "full_name": full_name,
                 "username": username,
                 "bio": bio,
-                "password": hashed_pw,  # ✅ STORE HASHED PASSWORD
+                "password": hashed_pw,  #  STORE HASHED PASSWORD
                 "profile_url": profile_url
             }).execute()
         except Exception as insert_error:
@@ -175,8 +178,20 @@ def signin_view(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
 
+        cache_key = f"login_attempts_{username}"
+        data = cache.get(cache_key, {"count": 0, "first_try": time.time()})
+        attempts = data["count"]
+        first_try = data["first_try"]
+        elapsed = time.time() - first_try
+
+        if attempts >= 5 and elapsed < 300:
+            remaining = 300 - int(elapsed)
+            minutes = remaining // 60
+            seconds = remaining % 60
+            request.session["error"] = f"⏳ Too many attempts. Try again in {minutes}m {seconds}s."
+            return redirect("signin")
+
         try:
-            # Fetch user by username only (do not check password yet)
             response = (
                 supabase
                 .table("accounts")
@@ -189,15 +204,27 @@ def signin_view(request):
             user_data = response.data
             if user_data and check_password(password, user_data["password"]):
                 request.session["user_id"] = user_data["user_id"]
+                cache.delete(cache_key)
                 return redirect("home")
             else:
-                return render(request, "home/index.html", {"error": "❌ Invalid credentials."})
+                # if 5+ mins passed, reset timer and count
+                if elapsed >= 300:
+                    data = {"count": 1, "first_try": time.time()}
+                else:
+                    data["count"] += 1
+                cache.set(cache_key, data, timeout=600)
+                request.session["error"] = "❌ Invalid credentials."
+                return redirect("signin")
 
         except Exception as e:
             print("Login error:", e)
-            return render(request, "home/index.html", {"error": "⚠️ Something went wrong. Try again."})
+            request.session["error"] = "⚠️ Something went wrong. Try again."
+            return redirect("signin")
 
-    return render(request, "home/index.html")
+    # GET request
+    error = request.session.pop("error", None)
+    return render(request, "home/index.html", {"error": error})
+
 
 
 def search_users_view(request):
